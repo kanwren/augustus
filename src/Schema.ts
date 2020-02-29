@@ -248,9 +248,11 @@ export namespace Schemas {
 
     /**
      * Construct a schema for a type union, given schemas of either type.
-     * Additionally requires type predicates in order to be able to determine which
-     * schema to use when encoding. If the two types are trivially serializable
-     * (they have a 'Schema<T, T>'), consider using 'aUnion' instead.
+     * Additionally requires type predicates in order to be able to determine
+     * which schema to use when encoding. If the two types are trivially
+     * serializable (they have a 'Schema<T, T>'), consider using 'aUnion'
+     * instead. Note that this is left-biased; if both types are the same, for
+     * example, the schema on the left will be tried first.
      */
     export function aUnionOf<TL, SL, TR, SR>(isLeft: (x: TL | TR) => x is TL, isRight: (x: TL | TR) => x is TR, left: Schema<TL, SL>, right: Schema<TR, SR>): Schema<TL | TR, SL | SR> {
         return {
@@ -279,20 +281,26 @@ export namespace Schemas {
     }
 
     /**
-     * Like 'aUnionOf', but for trivial schemas that encode to the same type,
-     * since they already have built-in validation. For example:
+     * Like 'aUnionOf', but for schemas in which at least one of the types in
+     * the union trivially encodes to the same type, since they already have
+     * built-in validation. If only one of the types is trivial, it must go on
+     * the left. For example:
      *
      * <pre><code>
      * const numberOrNullSchema: Schema<number | null, number | null> =
      *     aUnion(aNumber, aNull);
      * </code></pre>
      */
-    export function aUnion<TL, TR>(left: Schema<TL, TL>, right: Schema<TR, TR>): Schema<TL | TR, TL | TR> {
+    export function aUnion<TL, TR, SR>(left: Schema<TL, TL>, right: Schema<TR, SR>): Schema<TL | TR, TL | SR> {
         return aUnionOf(
             (x: TL | TR): x is TL => left.validate(x),
-            (x: TL | TR): x is TR => right.validate(x),
+            (x: TL | TR): x is TR => !left.validate(x),
             left,
             right,
         );
+    }
+
+    export function anOptional<T, S>(schema: Schema<T, S>): Schema<undefined | T, undefined | S> {
+        return aUnion(anUndefined, schema);
     }
 }
