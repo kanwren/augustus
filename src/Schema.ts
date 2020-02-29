@@ -303,4 +303,20 @@ export namespace Schemas {
     export function anOptional<T, S>(schema: Schema<T, S>): Schema<undefined | T, undefined | S> {
         return aUnion(anUndefined, schema);
     }
+
+    /**
+     * Extends a schema's validation to apply additional restrictions to the
+     * representation type after initial validation. For example:
+     *
+     * <pre><code>
+     * const positive: Schema<number, number> = constrain(aNumber, x => x > 0);
+     * </code></pre>
+     */
+    export function constrain<T, S>(schema: Schema<T, S>, predicate: (x: S) => boolean): Schema<T, S> {
+        return {
+            encode: x => schema.encode(x),
+            decode: x => schema.decode(x),
+            validate: (x): x is S => schema.validate(x) && predicate(x),
+        };
+    }
 }
