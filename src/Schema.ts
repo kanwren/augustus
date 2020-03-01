@@ -111,11 +111,17 @@ export namespace Schemas {
      */
     export function aRecordOf<
         // The structure of the record
-        Structure extends { [K: string]: Schema<any, any>; },
+        Structure extends {
+            [K: string]: Schema<any, any>;
+        },
         // The record being serialized
-        T extends { [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never; },
+        T extends {
+            [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never;
+        },
         // The serialization result
-        S extends { [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never; }
+        S extends {
+            [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never;
+        }
     >(structure: Structure): Schema<T, S> {
         return {
             encode: (x: T) => {
@@ -175,11 +181,17 @@ export namespace Schemas {
      */
     export function aClass<
         // The structure of the serialized record
-        Structure extends { [K: string]: Schema<any, any>; },
+        Structure extends {
+            [K: string]: Schema<any, any>;
+        },
         // The type of the class
-        T extends { [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never; },
+        T extends {
+            [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never;
+        },
         // The type of the serialized record
-        S extends { [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never; }
+        S extends {
+            [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never;
+        }
     >(structure: Structure, reconstruct: (data: { [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never; }) => T): Schema<T, S> {
         const { encode, decode, validate } = aRecordOf<Structure, T, S>(structure);
         return {
@@ -229,9 +241,13 @@ export namespace Schemas {
         // The structure of the serialized tuple
         Structure extends Schema<any, any>[],
         // The tuple being serialized
-        T extends { [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never; },
+        T extends {
+            [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never;
+        },
         // The type of the serialized tuple
-        S extends { [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never; }
+        S extends {
+            [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never;
+        }
     >(elementSchemas: Structure): Schema<T, S> {
         return {
             encode: (tup: T) => {
