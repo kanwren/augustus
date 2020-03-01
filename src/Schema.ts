@@ -43,14 +43,23 @@ const id = <T>(x: T): T => x;
 
 type NonEmptyArray<T> = [T, ...T[]];
 
-/**
- * Function to construct trivial schemas for representable primitive types.
- */
-function primitive<T>(validate: (data: any) => data is T): Schema<T, T> {
-    return { encode: id, decode: id, validate };
-}
-
 export namespace Schemas {
+    /**
+     * Basic schema constructor function. It is also possible to just make the
+     * object containing the functions directly, but this may be considered more
+     * declarative.
+     */
+    export function schema<T, S>(encode: (src: T) => S, decode: (data: S) => T, validate: (data: any) => data is S): Schema<T, S> {
+        return { encode, decode, validate };
+    }
+
+    /**
+     * Function to construct trivial schemas for representable primitive types.
+     */
+    export function primitive<T>(validate: (data: any) => data is T): Schema<T, T> {
+        return { encode: id, decode: id, validate };
+    }
+
     /**
      * Trivial 'Schema' for 'string'.
      */
