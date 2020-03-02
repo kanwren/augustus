@@ -9,17 +9,23 @@
     "dist"
   ],
   "scripts": {
-    "compile": "npx tsc",
     "clean": "npx shx --silent rm -r dist/ || npx shx true",
+    "compile": "npx tsc --module commonjs",
     "compile:watch": "npx tsc --watch",
-    "build": "npm run clean && npm run compile",
+    "rollup": "npx rollup -c rollup.config.ts",
+    "build": "npm run clean && npm run compile && npm run rollup",
     "lint": "npx eslint src --ext .ts"
   },
   "dependencies": {},
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
     "@typescript-eslint/eslint-plugin": "^2.19.0",
     "@typescript-eslint/parser": "^2.19.0",
     "eslint": "^6.8.0",
+    "rollup": "^1.32.0",
+    "rollup-plugin-sourcemaps": "^0.5.0",
+    "rollup-plugin-typescript2": "^0.26.0",
     "shx": "^0.3.2",
     "source-map": "^0.7.3",
     "typescript": "^3.8.2"
