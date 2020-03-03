@@ -357,4 +357,31 @@ export namespace Schemas {
             validate: (x): x is S => schema.validate(x) && predicate(x),
         };
     }
+
+    /**
+     * Transform a schema in the contravariant position to serialization; given
+     * a way to encode and decode from a new domain type to the old domain type,
+     * produce a new schema that has the new domain type.
+     */
+    export function contra<U, T, S>(schema: Schema<T, S>, encode: (src: U) => T, decode: (data: T) => U): Schema<U, S> {
+        return {
+            encode: (x: U): S => schema.encode(encode(x)),
+            decode: (x: S): U => decode(schema.decode(x)),
+            validate: (data: any): data is S => schema.validate(data),
+        };
+    }
+
+    /**
+     * Transform a schema in the covariant position to serialization; given a
+     * way to encode and decode from a new representation type to the old
+     * representation type, and a new validator, produce a new schema that has
+     * the new representation type.
+     */
+    export function co<T, S, U>(schema: Schema<T, S>, encode: (src: S) => U, decode: (data: U) => S, validate: (data: any) => data is U): Schema<T, U> {
+        return {
+            encode: (x: T): U => encode(schema.encode(x)),
+            decode: (x: U): T => schema.decode(decode(x)),
+            validate
+        };
+    }
 }
