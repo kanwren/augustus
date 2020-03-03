@@ -143,12 +143,8 @@ export namespace Schemas {
                     return false;
                 }
                 for (const key in structure) {
-                    if (!(key in data)) {
-                        return false;
-                    }
-                    const value = data[key];
                     const validator = structure[key];
-                    if (!validator.validate(value)) {
+                    if (!validator.validate(data[key])) {
                         return false;
                     }
                 }
