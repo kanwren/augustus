@@ -25,9 +25,9 @@ export interface Schema<T, S> {
  *
  * <pre><code>
  * const person: Schema<Person, { name: string, age: number } =
- *     aRecordOf({ name: aString, age: aNumber() });
+ *     recordOf({ name: aString, age: aNumber });
  * const people: Schema<Person[], ReprOf<typeof personSchema>[]> =
- *     anArrayOf(personSchema);
+ *     arrayOf(personSchema);
  * </code></pre>
  */
 export type ReprOf<T> = T extends Schema<T, infer S> ? S : never;
@@ -103,13 +103,13 @@ export namespace Schemas {
      * type Person = { name: string; age: number; };
      *
      * const personSchema: Schema<Person, { name: string; age: number; }> =
-     *     aRecordOf({
+     *     recordOf({
      *         name: aString,
      *         age: aNumber,
      *     });
      * </code></pre>
      */
-    export function aRecordOf<
+    export function recordOf<
         // The structure of the record
         Structure extends {
             [K: string]: Schema<any, any>;
@@ -154,7 +154,7 @@ export namespace Schemas {
     }
 
     /**
-     * Serializes classes into records, like 'aRecordOf', but with custom
+     * Serializes classes into records, like 'recordOf', but with custom
      * reconstruction for class instances, such as using a constructor. When
      * decoding a representation, the values of the representation will first be
      * recursively decoded, and then 'reconstruct' will be applied to the result to
@@ -169,13 +169,13 @@ export namespace Schemas {
      * }
      *
      * const personSchema: Schema<Person, { name: string; age: number; }> =
-     *     aClass({
+     *     classOf({
      *         name: aString,
      *         age: aNumber,
      *     }, ({ name, age }) => new Person(name, age));
      * </code></pre>
      */
-    export function aClass<
+    export function classOf<
         // The structure of the serialized record
         Structure extends {
             [K: string]: Schema<any, any>;
@@ -189,7 +189,7 @@ export namespace Schemas {
             [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never;
         }
     >(structure: Structure, reconstruct: (data: { [K in keyof Structure]: Structure[K] extends Schema<infer A, any> ? A : never; }) => T): Schema<T, S> {
-        const { encode, decode, validate } = aRecordOf<Structure, T, S>(structure);
+        const { encode, decode, validate } = recordOf<Structure, T, S>(structure);
         return {
             encode,
             decode: x => reconstruct(decode(x)),
@@ -200,7 +200,7 @@ export namespace Schemas {
     /**
      * Construct a schema for arrays, given a schema for their elements.
      */
-    export function anArrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<T[], S[]> {
+    export function arrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<T[], S[]> {
         return {
             encode: (arr: T[]) => arr.map(x => elementsSchema.encode(x)),
             decode: (arr: S[]) => arr.map(x => elementsSchema.decode(x)),
@@ -218,8 +218,8 @@ export namespace Schemas {
         };
     }
 
-    export function aNonEmptyArrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
-        const { encode, decode, validate } = anArrayOf(elementsSchema);
+    export function nonEmptyArrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
+        const { encode, decode, validate } = arrayOf(elementsSchema);
         return {
             encode: encode as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
             decode: decode as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
@@ -233,7 +233,7 @@ export namespace Schemas {
         };
     }
 
-    export function aTupleOf<
+    export function tupleOf<
         // The structure of the serialized tuple
         Structure extends Schema<any, any>[],
         // The tuple being serialized
@@ -271,11 +271,11 @@ export namespace Schemas {
      * Construct a schema for a type union, given schemas of either type.
      * Additionally requires type predicates in order to be able to determine
      * which schema to use when encoding. If the two types are trivially
-     * serializable (they have a 'Schema<T, T>'), consider using 'aUnion'
+     * serializable (they have a 'Schema<T, T>'), consider using 'union'
      * instead. Note that this is left-biased; if both types are the same, for
      * example, the schema on the left will be tried first.
      */
-    export function aUnionOf<TL, SL, TR, SR>(isLeft: (x: TL | TR) => x is TL, isRight: (x: TL | TR) => x is TR, left: Schema<TL, SL>, right: Schema<TR, SR>): Schema<TL | TR, SL | SR> {
+    export function unionOf<TL, SL, TR, SR>(isLeft: (x: TL | TR) => x is TL, isRight: (x: TL | TR) => x is TR, left: Schema<TL, SL>, right: Schema<TR, SR>): Schema<TL | TR, SL | SR> {
         return {
             encode: (x: TL | TR) => {
                 if (isLeft(x)) {
@@ -302,18 +302,18 @@ export namespace Schemas {
     }
 
     /**
-     * Like 'aUnionOf', but for schemas in which at least one of the types in
+     * Like 'unionOf', but for schemas in which at least one of the types in
      * the union trivially encodes to the same type, since they already have
      * built-in validation. If only one of the types is trivial, it must go on
      * the left. For example:
      *
      * <pre><code>
      * const numberOrNullSchema: Schema<number | null, number | null> =
-     *     aUnion(aNumber, aNull);
+     *     union(aNumber, aNull);
      * </code></pre>
      */
-    export function aUnion<TL, TR, SR>(left: Schema<TL, TL>, right: Schema<TR, SR>): Schema<TL | TR, TL | SR> {
-        return aUnionOf(
+    export function union<TL, TR, SR>(left: Schema<TL, TL>, right: Schema<TR, SR>): Schema<TL | TR, TL | SR> {
+        return unionOf(
             (x: TL | TR): x is TL => left.validate(x),
             (x: TL | TR): x is TR => !left.validate(x),
             left,
@@ -321,8 +321,20 @@ export namespace Schemas {
         );
     }
 
-    export function anOptional<T, S>(schema: Schema<T, S>): Schema<undefined | T, undefined | S> {
-        return aUnion(anUndefined, schema);
+    /**
+     * Allows the schema to be undefined. In 'recordOf', this can be used to
+     * make a field optional:
+     *
+     * <pre><code>
+     * const schema = recordOf({ x: optional(aNumber) });
+     * schema.validate({ x: 1 });         // true
+     * schema.validate({ x: "hello" });   // false
+     * schema.validate({ x: undefined }); // true
+     * schema.validate({});               // true
+     * </code></pre>
+     */
+    export function optional<T, S>(schema: Schema<T, S>): Schema<undefined | T, undefined | S> {
+        return union(anUndefined, schema);
     }
 
     /**
