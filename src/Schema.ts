@@ -61,6 +61,11 @@ export namespace Schemas {
     }
 
     /**
+     * The most basic schema, which accepts anything and validates everything
+     */
+    export const anAny: Schema<any, any> = primitive((data): data is any => true);
+
+    /**
      * Trivial 'Schema' for 'string'.
      */
     export const aString: Schema<string, string> = primitive((data: any): data is string => {
