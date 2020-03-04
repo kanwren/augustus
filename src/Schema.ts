@@ -159,6 +159,11 @@ export namespace Schemas {
     }
 
     /**
+     * Trivial serializer for empty object, the identity under object unions.
+     */
+    export const anEmptyObject: Schema<{}, {}> = recordOf({});
+
+    /**
      * Serializes classes into records, like 'recordOf', but with custom
      * reconstruction for class instances, such as using a constructor. When
      * decoding a representation, the values of the representation will first be
@@ -271,6 +276,12 @@ export namespace Schemas {
             }
         };
     }
+
+    /**
+     * Trivial serializer for empty array/tuple, the identity under tuple/array
+     * concatenation.
+     */
+    export const anEmptyArray: Schema<[], []> = tupleOf([]);
 
     /**
      * Construct a schema for a type union, given schemas of either type.
