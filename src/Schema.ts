@@ -258,7 +258,7 @@ export namespace Schemas {
                 return tup.map((x, i) => elementSchemas[i].decode(x)) as T;
             },
             validate: (data: any): data is S => {
-                if (!Array.isArray(data)) {
+                if (!Array.isArray(data) || data.length !== elementSchemas.length) {
                     return false;
                 }
                 for (let i = 0; i < data.length; i++) {
