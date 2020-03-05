@@ -74,6 +74,14 @@ export namespace Schemas {
     }
 
     /**
+     * Function to convert a literal value into a schema that validates that
+     * value.
+     */
+    export function literal<T>(value: T): Schema<T, T> {
+        return { encode: id, decode: id, validate: (x: any): x is T => x === value };
+    }
+
+    /**
      * The most basic schema, which accepts anything and validates everything
      */
     export const anAny: Schema<any, any> = primitive((data): data is any => true);
