@@ -119,7 +119,10 @@ const styleRules = {
   // Indent with 4 spaces
   "indent": "off",
   "@typescript-eslint/indent": ["warn", 4, {
-    "ignoredNodes": ["TemplateLiteral > *"],
+    "ignoredNodes": [
+      "TemplateLiteral > *",
+      "TSTypeReference > TSTypeParameterInstantiation",
+    ],
   }],
 
   // Disallow trailing whitespace
