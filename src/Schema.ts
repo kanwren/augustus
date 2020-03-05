@@ -29,8 +29,16 @@ export interface Schema<T, S> {
  * const people: Schema<Person[], ReprOf<typeof personSchema>[]> =
  *     arrayOf(personSchema);
  * </code></pre>
+ *
+ * This can also be used to automatically reflect domain types from some
+ * combinators:
+ *
+ * <pre><code>
+ * const person = recordOf({ name: aString, age: aNumber });
+ * type Person = ReprOf<typeof person>; // { name: string; age: number; }
+ * </code></pre>
  */
-export type ReprOf<T> = T extends Schema<T, infer S> ? S : never;
+export type ReprOf<T extends Schema<any, any>> = T extends Schema<infer _, infer S> ? S : never;
 
 // Function to use when the compiler needs a path to be present, even when it's
 // technically unreachable
