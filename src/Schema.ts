@@ -20,6 +20,11 @@ export interface Schema<T, S> {
 }
 
 /**
+ * Extract the domain type from the type of a schema.
+ */
+export type DomainOf<T extends Schema<any, any>> = T extends Schema<infer S, infer _> ? S : never;
+
+/**
  * Extract the representation type from the type of a schema. This is useful in
  * making schemas that are derived from other nontrivial schemas. For example:
  *
