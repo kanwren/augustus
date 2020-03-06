@@ -1,10 +1,10 @@
-type IfHasTail<T extends any[], Y=unknown, N=never> =
-    T extends ([] | [any]) ? N : Y;
-
 type IfEmpty<T extends any[], Y=unknown, N=never> =
     T extends []
         ? Y
         : N;
+
+type IfHasTail<T extends any[], Y=unknown, N=never> =
+    T extends ([] | [any]) ? N : Y;
 
 type Head<T extends any[]> =
     T extends [any, ...any[]]
@@ -16,24 +16,8 @@ type Tail<T extends any[]> =
         ? Tail
         : never;
 
-type Last<T extends any[]> = {
-    0: Last<Tail<T>>;
-    1: Head<T>;
-}[IfHasTail<T, 0, 1>];
-
 type Cons<A, T extends any[]> =
     Parameters<(head: A, ...tail: T) => any>;
-
-type Snoc<A, T extends any[], Suffix extends any[] = []> = {
-    0: Cons<A, Suffix>;
-    1: Snoc<A, Tail<T>, Cons<Head<T>, Suffix>>;
-    2: Cons<Head<T>, Cons<A, Suffix>>;
-}[IfEmpty<T, 0, IfHasTail<T, 1, 2>>];
-
-type Uncons<T extends any[]> =
-    ((...args: T) => any) extends ((head: infer Head, ...tail: infer Tail) => any)
-        ? [Head, Tail]
-        : never;
 
 type IfFinite<T extends any[], Y=unknown, N=never> =
     T extends []
