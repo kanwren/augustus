@@ -239,12 +239,7 @@ export namespace Schemas {
                 if (!Array.isArray(data)) {
                     return false;
                 }
-                for (const x of data) {
-                    if (!elementsSchema.validate(x)) {
-                        return false;
-                    }
-                }
-                return true;
+                return data.every(x => elementsSchema.validate(x));
             },
         };
     }
@@ -255,11 +250,7 @@ export namespace Schemas {
             encode: encode as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
             decode: decode as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
             validate: (data: any): data is NonEmptyArray<S> => {
-                if (!Array.isArray(data) || data.length < 1) {
-                    return false;
-                } else {
-                    return validate(data);
-                }
+                return Array.isArray(data) && data.length >= 1 && validate(data);
             },
         };
     }
@@ -287,13 +278,7 @@ export namespace Schemas {
                 if (!Array.isArray(data) || data.length !== elementSchemas.length) {
                     return false;
                 }
-                for (let i = 0; i < data.length; i++) {
-                    const schema = elementSchemas[i];
-                    if (!schema.validate(data[i])) {
-                        return false;
-                    }
-                }
-                return true;
+                return elementSchemas.every((schema, i) => schema.validate(data[i]));
             }
         };
     }
@@ -345,9 +330,12 @@ export namespace Schemas {
      * the left. For example:
      *
      * <pre><code>
-     * const numberOrNullSchema: Schema<number | null, number | null> =
-     *     union(aNumber, aNull);
+     * const numberOrStringSchema: Schema<number | string, number | string> =
+     *     union(aNumber, aString);
      * </code></pre>
+     *
+     * Like 'unionOf', this is left-biased; the left schema will apply in the
+     * case where both schemas would validate a value.
      */
     export function union<TL, TR, SR>(left: Schema<TL, TL>, right: Schema<TR, SR>): Schema<TL | TR, TL | SR> {
         return unionOf(
