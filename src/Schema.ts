@@ -275,7 +275,7 @@ export namespace Schemas {
         S extends {
             [K in keyof Structure]: Structure[K] extends Schema<any, infer B> ? B : never;
         }
-    >(elementSchemas: Structure): Schema<T, S> {
+    >(...elementSchemas: Structure): Schema<T, S> {
         return {
             encode: (tup: T) => {
                 return tup.map((x, i) => elementSchemas[i].encode(x)) as S;
@@ -302,7 +302,7 @@ export namespace Schemas {
      * Trivial serializer for empty array/tuple, the identity under tuple/array
      * concatenation.
      */
-    export const anEmptyArray: Schema<[], []> = tupleOf([]);
+    export const anEmptyArray: Schema<[], []> = tupleOf();
 
     /**
      * Construct a schema for a type union, given schemas of either type.
