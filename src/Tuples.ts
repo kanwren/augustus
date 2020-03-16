@@ -1,25 +1,25 @@
-type IfEmpty<T extends any[], Y=unknown, N=never> =
+export type IfEmpty<T extends any[], Y=unknown, N=never> =
     T extends []
         ? Y
         : N;
 
-type IfHasTail<T extends any[], Y=unknown, N=never> =
+export type IfHasTail<T extends any[], Y=unknown, N=never> =
     T extends ([] | [any]) ? N : Y;
 
-type Head<T extends any[]> =
+export type Head<T extends any[]> =
     T extends [any, ...any[]]
         ? T[0]
         : never;
 
-type Tail<T extends any[]> =
+export type Tail<T extends any[]> =
     ((...args: T) => any) extends ((head: any, ...tail: infer Tail) => any)
         ? Tail
         : never;
 
-type Cons<A, T extends any[]> =
+export type Cons<A, T extends any[]> =
     Parameters<(head: A, ...tail: T) => any>;
 
-type IfFinite<T extends any[], Y=unknown, N=never> =
+export type IfFinite<T extends any[], Y=unknown, N=never> =
     T extends []
         ? Y
         : T extends (infer E)[]
