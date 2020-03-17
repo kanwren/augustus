@@ -368,6 +368,15 @@ export namespace Schemas {
     }
 
     /**
+     * Restrict a string schema to only strings matching a regular expression.
+     * The match is conducted via 'RegExp.prototype.test'. To ensure that the
+     * entire string matches the regex, use <code>/^regex$/</code>.
+     */
+    export function matching(regex: RegExp): Schema<string, string> {
+        return constrain(aString, s => regex.test(s));
+    }
+
+    /**
      * Transform a schema in the contravariant position to serialization; given
      * a way to encode and decode from a new domain type to the old domain type,
      * produce a new schema that has the new domain type.
