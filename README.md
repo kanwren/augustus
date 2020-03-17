@@ -21,11 +21,11 @@ data, you have one of two choices:
   `string` instead, JavaScript will attempt to automatically coerce it for you,
   which can lead to unexpected behavior.
 - Write a type predicate to assert that your data is of the expected type: `(x:
-  any) => x is S`. However, this is often a manual process. For deeply-nested
-  records, it is very tedious, and changes in structure are likely to break the
-  predicate. Furthermore, since type predicates unsafely turn boolean return
-  values into type assertions, their correctness cannot be checked by the
-  compiler by design.
+  unknown) => x is S`. However, this is often a manual process. For
+  deeply-nested records, it is very tedious, and changes in structure are likely
+  to break the predicate. Furthermore, since type predicates unsafely turn
+  boolean return values into type assertions, their correctness cannot be
+  checked by the compiler by design.
 
 Instead, using a combinator-based approach allows for more flexible, modular,
 and reusable data validation, making it easy to build up complex and nested
