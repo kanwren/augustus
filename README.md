@@ -14,12 +14,12 @@ In TypeScript, it's often very difficult to validate the structure of data after
 it has been decoded. For example, `JSON.parse` returns an `any`, and to use this
 data, you have one of two choices:
 
-- Use the `any` directly, or do an unsafe cast into your expected type. This
-  will fail at runtime if the data does not match the expected structure. If the
-  parsed types differ from the expected ones, it can easily fail silently as
-  well. For example, if you expect the data to be a `number`, but it parses as a
-  `string` instead, JavaScript will attempt to automatically coerce it for you,
-  which can lead to unexpected behavior.
+- Use the `any` directly, or do an unsafe type assertion into your expected
+  type. This will fail at runtime if the data does not match the expected
+  structure. If the parsed types differ from the expected ones, it can easily
+  fail silently as well. For example, if you expect the data to be a `number`,
+  but it parses as a `string` instead, JavaScript will attempt to automatically
+  coerce it for you, which can lead to unexpected behavior.
 - Write a type predicate to assert that your data is of the expected type: `(x:
   unknown) => x is S`. However, this is often a manual process. For
   deeply-nested records, it is very tedious, and changes in structure are likely
