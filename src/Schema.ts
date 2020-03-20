@@ -72,12 +72,12 @@ export namespace Schemas {
      * object containing the functions directly, but this may be considered more
      * declarative.
      */
-    export function schema<T, S>(
-        encode: (src: T) => S,
-        decode: (data: S) => T,
-        validate: (data: unknown) => data is S,
-    ): Schema<T, S> {
-        return { encode, decode, validate };
+    export function schema<T, S>(args: {
+        encode: (src: T) => S;
+        decode: (data: S) => T;
+        validate: (data: unknown) => data is S;
+    }): Schema<T, S> {
+        return args;
     }
 
     /**
