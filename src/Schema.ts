@@ -72,7 +72,11 @@ export namespace Schemas {
      * object containing the functions directly, but this may be considered more
      * declarative.
      */
-    export function schema<T, S>(encode: (src: T) => S, decode: (data: S) => T, validate: (data: unknown) => data is S): Schema<T, S> {
+    export function schema<T, S>(
+        encode: (src: T) => S,
+        decode: (data: S) => T,
+        validate: (data: unknown) => data is S,
+    ): Schema<T, S> {
         return { encode, decode, validate };
     }
 
@@ -286,7 +290,12 @@ export namespace Schemas {
      * instead. Note that this is left-biased; if both types are the same, for
      * example, the schema on the left will be tried first.
      */
-    export function unionOf<TL, SL, TR, SR>(isLeft: (x: TL | TR) => x is TL, isRight: (x: TL | TR) => x is TR, left: Schema<TL, SL>, right: Schema<TR, SR>): Schema<TL | TR, SL | SR> {
+    export function unionOf<TL, SL, TR, SR>(
+        isLeft: (x: TL | TR) => x is TL,
+        isRight: (x: TL | TR) => x is TR,
+        left: Schema<TL, SL>,
+        right: Schema<TR, SR>,
+    ): Schema<TL | TR, SL | SR> {
         return {
             encode: (x: TL | TR) => {
                 if (isLeft(x)) {
@@ -395,7 +404,12 @@ export namespace Schemas {
      * representation type, and a new validator, produce a new schema that has
      * the new representation type.
      */
-    export function co<T, S, U>(schema: Schema<T, S>, encode: (src: S) => U, decode: (data: U) => S, validate: (data: unknown) => data is U): Schema<T, U> {
+    export function co<T, S, U>(
+        schema: Schema<T, S>,
+        encode: (src: S) => U,
+        decode: (data: U) => S,
+        validate: (data: unknown) => data is U,
+    ): Schema<T, U> {
         return {
             encode: (x: T): U => encode(schema.encode(x)),
             decode: (x: U): T => schema.decode(decode(x)),
