@@ -57,7 +57,7 @@ type RecordReprs<R extends Record<string, Schema<unknown, unknown>> | Schema<unk
 
 // Function to use when the compiler needs a path to be present, even when it's
 // technically unreachable
-function impossible(): never {
+function impossible(_: never): never {
     throw Error("This code should be unreachable");
 }
 
@@ -303,16 +303,16 @@ export namespace Schemas {
                 } else if (isRight(x)) {
                     return right.encode(x);
                 } else {
-                    return impossible();
+                    return impossible(x);
                 }
             },
-            decode: (json: SL | SR) => {
-                if (left.validate(json)) {
-                    return left.decode(json);
-                } else if (right.validate(json)) {
-                    return right.decode(json);
+            decode: (data: SL | SR) => {
+                if (left.validate(data)) {
+                    return left.decode(data);
+                } else if (right.validate(data)) {
+                    return right.decode(data);
                 } else {
-                    return impossible();
+                    return impossible(data);
                 }
             },
             validate: (data: unknown): data is SL | SR => {
