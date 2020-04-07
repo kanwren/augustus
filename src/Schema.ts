@@ -52,11 +52,11 @@ export type ReprOf<T extends Schema<unknown, unknown>> = T extends Schema<unknow
 // Replace the schemas in an object/array with the domains of the schemas
 type RecordDomains<R extends Record<string, Schema<unknown, unknown>> | Schema<unknown, unknown>[]> = {
     [K in keyof R]: R[K] extends Schema<infer A, unknown> ? A : never;
-};
+} & {};
 // Replace the schemas in an object/array with the representations of the schemas
 type RecordReprs<R extends Record<string, Schema<unknown, unknown>> | Schema<unknown, unknown>[]> = {
     [K in keyof R]: R[K] extends Schema<unknown, infer B> ? B : never;
-};
+} & {};
 
 // Function to use when the compiler needs a path to be present, even when it's
 // technically unreachable
@@ -563,11 +563,11 @@ export namespace Schemas {
 // Replace the schemas in an object/array with the domains of the schemas
 type RecordDomainsLazy<R extends Record<string, () => Schema<unknown, unknown>>> = {
     [K in keyof R]: ReturnType<R[K]> extends Schema<infer A, unknown> ? A : never;
-};
+} & {};
 // Replace the schemas in an object/array with the representations of the schemas
 type RecordReprsLazy<R extends Record<string, () => Schema<unknown, unknown>>> = {
     [K in keyof R]: ReturnType<R[K]> extends Schema<unknown, infer B> ? B : never;
-};
+} & {};
 
 export namespace LazySchemas {
     /**
