@@ -408,6 +408,17 @@ export namespace Schemas {
     }
 
     /**
+     * Like 'constrain', but uses a type predicate to narrow the
+     * representational type. For example, this can be used to narrow the
+     * representational type of a string schema that is more specifically a set
+     * of keys of another type, by 'in' to make a type predicate.
+     */
+    export function asserting<T, R, S extends R>(schema: Schema<T, R>, predicate: (x: R) => x is S): Schema<T, S> {
+        // We can decay type predicates to boolean constraints
+        return constrain(schema, predicate) as Schema<T, S>;
+    }
+
+    /**
      * Restrict a string schema to only strings matching a regular expression.
      * The match is conducted via 'RegExp.prototype.test'. To ensure that the
      * entire string matches the regex, use <code>/^regex$/</code>.
