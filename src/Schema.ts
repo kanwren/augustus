@@ -304,7 +304,7 @@ export namespace Schemas {
                 return acc;
             },
             validate: (data: unknown): data is [KR, VR][] => {
-                return tupleOf(keys, values).validate(data);
+                return arrayOf(tupleOf(keys, values)).validate(data);
             },
         };
     }
