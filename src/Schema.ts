@@ -14,10 +14,13 @@
  * 'Schema<Person, { name: string; age: number; }' to handle this for us.
  */
 export interface Schema<T, S> {
-    encode(src: T): S;
+    encode(val: T): S;
     decode(data: S): T;
     validate(data: unknown): data is S;
 }
+
+// The possible types of the keys of an object
+type PrimKey = string | number | symbol;
 
 /**
  * Extract the domain type from the type of a schema.
@@ -73,7 +76,7 @@ export namespace Schemas {
      * declarative.
      */
     export function schema<T, S>(args: {
-        encode: (src: T) => S;
+        encode: (val: T) => S;
         decode: (data: S) => T;
         validate: (data: unknown) => data is S;
     }): Schema<T, S> {
@@ -172,6 +175,124 @@ export namespace Schemas {
     });
 
     /**
+     * Construct a schema for arrays, given a schema for their elements.
+     */
+    export function arrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<T[], S[]> {
+        return {
+            encode: (arr: T[]) => arr.map(x => elementsSchema.encode(x)),
+            decode: (arr: S[]) => arr.map(x => elementsSchema.decode(x)),
+            validate: (data: unknown): data is S[] => {
+                if (!Array.isArray(data)) {
+                    return false;
+                }
+                return data.every(x => elementsSchema.validate(x));
+            },
+        };
+    }
+
+    export function nonEmptyArrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
+        const { encode, decode, validate } = arrayOf(elementsSchema);
+        return {
+            encode: encode as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
+            decode: decode as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
+            validate: (data: unknown): data is NonEmptyArray<S> => {
+                return Array.isArray(data) && data.length >= 1 && validate(data);
+            },
+        };
+    }
+
+    export function tupleOf<
+        // The structure of the serialized tuple
+        R extends Schema<unknown, unknown>[],
+    >(...elementSchemas: R): Schema<RecordDomains<R>, RecordReprs<R>> {
+        return {
+            encode: (tup: RecordDomains<R>) => {
+                return tup.map((x, i) => elementSchemas[i].encode(x)) as RecordReprs<R>;
+            },
+            decode: (tup: RecordReprs<R>) => {
+                return tup.map((x, i) => elementSchemas[i].decode(x)) as RecordDomains<R>;
+            },
+            validate: (data: unknown): data is RecordReprs<R> => {
+                if (!Array.isArray(data) || data.length !== elementSchemas.length) {
+                    return false;
+                }
+                return elementSchemas.every((schema, i) => schema.validate(data[i]));
+            }
+        };
+    }
+
+    /**
+     * Trivial serializer for empty array/tuple, the identity under tuple/array
+     * concatenation.
+     */
+    export const anEmptyArray: Schema<[], []> = tupleOf();
+
+    /**
+     * Serializes a raw object by serializing its keys.
+     */
+    export function object<V, R>(values: Schema<V, R>): Schema<Record<PrimKey, V>, Record<PrimKey, R>> {
+        return {
+            encode: (val: Record<PrimKey, V>): Record<PrimKey, R> => {
+                const acc: Record<PrimKey, R> = {};
+                for (const k in val) {
+                    acc[k] = values.encode(val[k]);
+                }
+                return acc;
+            },
+            decode: (data: Record<PrimKey, R>): Record<PrimKey, V> => {
+                const acc: Record<PrimKey, V> = {};
+                for (const k in data) {
+                    acc[k] = values.decode(data[k]);
+                }
+                return acc;
+            },
+            validate: (data: unknown): data is Record<PrimKey, R> => {
+                if (typeof data !== "object" || data === null) {
+                    return false;
+                }
+                const obj = data as Record<PrimKey, unknown>;
+                for (const k in obj) {
+                    if (!values.validate(obj[k])) {
+                        return false;
+                    }
+                }
+                return true;
+            },
+        };
+    }
+
+    /**
+     * Serializes an ES6 'Map'. We unfortunately cannot serialize it as an
+     * object, since a 'Map' is strictly more flexible; for example, `0` and
+     * `"0"` are considered different keys in a 'Map', but the same key in an
+     * object.
+     *
+     * When deserializing, if the same key is present multiple times, the last
+     * occurrence's value will be kept.
+     */
+    export function map<K, V, KR, VR>(keys: Schema<K, KR>, values: Schema<V, VR>): Schema<Map<K, V>, [KR, VR][]> {
+        return {
+            encode: (val: Map<K, V>): [KR, VR][] => {
+                const acc: [KR, VR][] = [];
+                for (const entry of val.entries()) {
+                    acc.push([keys.encode(entry[0]), values.encode(entry[1])]);
+                }
+                return acc;
+            },
+            decode: (data: [KR, VR][]): Map<K, V> => {
+                const acc: Map<K, V> = new Map();
+                for (const entry of data) {
+                    acc.set(keys.decode(entry[0]), values.decode(entry[1]));
+                }
+                return acc;
+            },
+            validate: (data: unknown): data is [KR, VR][] => {
+                return tupleOf(keys, values).validate(data);
+            },
+        };
+    }
+
+    /**
      * Construct a schema for a given record type, given the structure of the
      * record. For example:
      *
@@ -259,59 +380,6 @@ export namespace Schemas {
     >(structure: R, reconstruct: (data: RecordDomains<R>) => T): Schema<T, RecordReprs<R>> {
         return contra(recordOf(structure), id, reconstruct);
     }
-
-    /**
-     * Construct a schema for arrays, given a schema for their elements.
-     */
-    export function arrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<T[], S[]> {
-        return {
-            encode: (arr: T[]) => arr.map(x => elementsSchema.encode(x)),
-            decode: (arr: S[]) => arr.map(x => elementsSchema.decode(x)),
-            validate: (data: unknown): data is S[] => {
-                if (!Array.isArray(data)) {
-                    return false;
-                }
-                return data.every(x => elementsSchema.validate(x));
-            },
-        };
-    }
-
-    export function nonEmptyArrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
-        const { encode, decode, validate } = arrayOf(elementsSchema);
-        return {
-            encode: encode as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
-            decode: decode as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
-            validate: (data: unknown): data is NonEmptyArray<S> => {
-                return Array.isArray(data) && data.length >= 1 && validate(data);
-            },
-        };
-    }
-
-    export function tupleOf<
-        // The structure of the serialized tuple
-        R extends Schema<unknown, unknown>[],
-    >(...elementSchemas: R): Schema<RecordDomains<R>, RecordReprs<R>> {
-        return {
-            encode: (tup: RecordDomains<R>) => {
-                return tup.map((x, i) => elementSchemas[i].encode(x)) as RecordReprs<R>;
-            },
-            decode: (tup: RecordReprs<R>) => {
-                return tup.map((x, i) => elementSchemas[i].decode(x)) as RecordDomains<R>;
-            },
-            validate: (data: unknown): data is RecordReprs<R> => {
-                if (!Array.isArray(data) || data.length !== elementSchemas.length) {
-                    return false;
-                }
-                return elementSchemas.every((schema, i) => schema.validate(data[i]));
-            }
-        };
-    }
-
-    /**
-     * Trivial serializer for empty array/tuple, the identity under tuple/array
-     * concatenation.
-     */
-    export const anEmptyArray: Schema<[], []> = tupleOf();
 
     /**
      * Construct a schema for a type union, given schemas of either type.
