@@ -416,4 +416,48 @@ export namespace Schemas {
         return constrain(aString, s => regex.test(s));
     }
 
+    /**
+     * Construct a schema that serializes a value by its index in an array of
+     * possible values. This is a somewhat unsafe combinator, since any
+     * unrecognized value will throw an error. Furthermore, serialization
+     * requires an O(n) lookup via an 'indexOf', which is not performance
+     * optimal. This is also brittle, since changing the order of array elements
+     * can break the deserialization if your data is persistent. Only use this
+     * when you know what you're doing.
+     */
+    export function indexing<T>(values: T[]): Schema<T, number> {
+        return contra(
+            constrain(aNumber, x => x >= 0 && x < values.length),
+            (x: T): number => {
+                const ix = values.indexOf(x);
+                if (ix < 0) {
+                    throw new Error(`Serialization error: attempted to serialize ${x} by index in ${values}`);
+                }
+                return ix;
+            },
+            (x: number): T => values[x],
+        );
+    }
+
+    // TODO: restrict the keys to a 'K extends string' set; figure out a good
+    // way to do a 'K extends S => Schema<S, S> -> Schema<K, K>', since
+    // 'asserting' can only map the representational type
+    /**
+     * Like 'indexing', except use an object mapping string values instead of an
+     * array with indices. All of the same restrictions and warnings apply.
+     */
+    export function mapping<T>(values: Record<string, T>): Schema<T, string> {
+        return contra(
+            constrain(aString, s => s in values),
+            (val: T): string => {
+                for (const k in values) {
+                    if (values[k] === val) {
+                        return k;
+                    }
+                }
+                throw new Error(`Serialization error: attempted to serialize ${val} by key in ${values}`);
+            },
+            (key: string): T => values[key],
+        );
+    }
 }
