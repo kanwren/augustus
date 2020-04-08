@@ -19,6 +19,32 @@ export interface Schema<T, S> {
     validate(data: unknown): data is S;
 }
 
+/**
+ * An extension of a 'Schema' used for dependency injection, allowing us to
+ * asymmetrically decode the representation type. An 'InjectSchema<T, D, B, S>'
+ * represents a base 'Schema<B, S>' between a base domain type and its
+ * serialized representation, with a way to inject a context/dependency 'D' to
+ * recover the true domain type 'T'.
+ *
+ * Assume we have a domain type that contains some context that should not be
+ * serialized, but we need this context to make an instance of the domain type.
+ * For example, this can happen if we inject a reference through the
+ * constructor. Let's call this the "true" domain type.
+ *
+ * To get around the asymmetry of decoding with context injection, we create a
+ * "base" domain type by forgetting the context/dependency from the true domain
+ * type. We first create a regular schema to convert between the base domain
+ * type and the serialized representation. We then extend this with the ability
+ * to "project" from the true domain type into the base domain type ('T => B'),
+ * by discarding the context. We also add a way to "inject" the context, which
+ * yields a function that can instantiate the true domain type from the base
+ * domain type ('B => T').
+ */
+export interface InjectSchema<T, D, B, S> extends Schema<B, S> {
+    project(val: T): B;
+    inject(context: D): (base: B) => T;
+}
+
 // The possible types of the keys of an object
 type PrimKey = string | number | symbol;
 
@@ -148,6 +174,29 @@ export namespace Schemas {
             encode: (val: T): S => schema().encode(val),
             decode: (data: S): T => schema().decode(data),
             validate: (data: unknown): data is S => schema().validate(data),
+        };
+    }
+
+    /**
+     * Construct an 'InjectSchema' from its base schema, a function to project
+     * the true domain type into the base domain type, and a function to inject
+     * some context to make a way to instantiate the true domain type from the
+     * base domain type.
+     *
+     * Somewhat similar to 'contra', but with asymmetrical decoding for context
+     * injection.
+     */
+    export function injecting<T, D, B, S>(
+        baseSchema: Schema<B, S>,
+        project: (val: T) => B,
+        inject: (context: D) => (base: B) => T,
+    ): InjectSchema<T, D, B, S> {
+        return {
+            encode: val => baseSchema.encode(val),
+            decode: data => baseSchema.decode(data),
+            validate: (data: unknown): data is S => baseSchema.validate(data),
+            project,
+            inject,
         };
     }
 
