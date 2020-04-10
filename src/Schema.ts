@@ -235,6 +235,11 @@ export namespace Schemas {
 
     /**
      * Trivial 'Schema' for 'undefined'.
+     *
+     * WARNING: Note that 'undefined' is not always safe to use in JSON, such as
+     * in an array. It can be used as the key of an object, however; see
+     * 'optional'. If you need an array of values that could be undefined, use
+     * 'union(aNull, anUndefined)' instead.
      */
     export const anUndefined: Schema<undefined, undefined> = primitive((data: unknown): data is undefined => {
         return typeof data === "undefined";
@@ -242,6 +247,10 @@ export namespace Schemas {
 
     /**
      * Construct a schema for arrays, given a schema for their elements.
+     *
+     * WARNING: 'undefined' will turn into 'null' in an array in JSON. If you
+     * want an array of values that could be undefined, use 'union(aNull,
+     * anUndefined)' instead.
      */
     export function arrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<T[], S[]> {
         return {
@@ -541,6 +550,10 @@ export namespace Schemas {
      * schema.validate({ x: undefined }); // true
      * schema.validate({});               // true
      * </code></pre>
+     *
+     * WARNING: If serializing to JSON, this can only safely be used on the
+     * values of an object, as 'undefined' will convert to 'null' in JSON
+     * arrays, and will fail to parse as a top-level value.
      */
     export function optional<T, S>(schema: Schema<T, S>): Schema<undefined | T, undefined | S> {
         return union(anUndefined, schema);
