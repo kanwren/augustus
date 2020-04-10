@@ -627,6 +627,39 @@ export namespace Schemas {
         );
     }
 
+    export function discriminating<
+        T extends Record<D, PrimKey>,
+        S extends Record<D, T[D]>,
+        // the discriminating key, in the domain and representation types
+        D extends keyof T & keyof S,
+    >(discriminant: D, schemas: Record<T[D], Schema<T, S>>): Schema<T, S> {
+        return {
+            encode: (x: T): S => {
+                return schemas[x[discriminant]].encode(x);
+            },
+            decode: (x: S): T => {
+                // TypeScript needs coercion here to figure out that the types
+                // are equal, T[D] = S[D]
+                const t = x[discriminant] as unknown as T[D];
+                return schemas[t].decode(x);
+            },
+            validate: (data: unknown): data is any => {
+                if (typeof data !== "object" || data === null) {
+                    return false;
+                }
+                const discriminantValue = (data as any)[discriminant] as T[D] | undefined;
+                if (discriminantValue === undefined) {
+                    return false;
+                }
+                const schema = schemas[discriminantValue] as Schema<T, S> | undefined;
+                if (schema) {
+                    return schema.validate(data);
+                } else {
+                    return false;
+                }
+            },
+        };
+    }
 }
 
 // Ugly helper types for object- or tuple-based schemas
