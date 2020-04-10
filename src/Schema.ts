@@ -359,6 +359,27 @@ export namespace Schemas {
     }
 
     /**
+     * Serializes an ES6 'Set'. The set is simply serialized to an array of the
+     * representation type.
+     *
+     * When deserializing, if the same value is present multiple times, the
+     * results will be the same as a call to the 'Set' constructor.
+     */
+    export function set<T, S>(schema: Schema<T, S>): Schema<Set<T>, S[]> {
+        return {
+            encode: (val: Set<T>): S[] => {
+                return Array.from(val).map(x => schema.encode(x));
+            },
+            decode: (data: S[]): Set<T> => {
+                return new Set(data.map(x => schema.decode(x)));
+            },
+            validate: (data: unknown): data is S[] => {
+                return arrayOf(schema).validate(data);
+            },
+        };
+    }
+
+    /**
      * Construct a schema for a given record type, given the structure of the
      * record. For example:
      *
