@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "clean": "npx shx --silent rm -r dist/ || npx shx true",
-    "compile": "npx tsc --module commonjs",
+    "compile": "npx tsc",
     "compile:watch": "npx tsc --watch",
     "rollup": "npx rollup -c rollup.config.ts",
     "build": "npm run clean && npm run compile && npm run rollup",

@@ -28,7 +28,12 @@ export default {
     },
     plugins: [
         typescript({
-            useTsconfigDeclarationDir: true
+            useTsconfigDeclarationDir: true,
+            tsconfigOverride: {
+                compilerOptions: {
+                    module: "es6",
+                },
+            },
         }),
         commonjs(),
         resolve(),
