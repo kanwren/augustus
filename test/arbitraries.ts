@@ -8,4 +8,12 @@ export namespace CustomArbitraries {
         fc.constant(Number.POSITIVE_INFINITY),
         fc.constant(Number.NaN),
     );
+
+    export function map<K, V>(keys: Arbitrary<K>, values: Arbitrary<V>): Arbitrary<Map<K, V>> {
+        return fc.array(fc.tuple(keys, values)).map(arr => new Map(arr));
+    }
+
+    export function set<T>(values: Arbitrary<T>): Arbitrary<Set<T>> {
+        return fc.array(values).map(arr => new Set(arr));
+    }
 }
