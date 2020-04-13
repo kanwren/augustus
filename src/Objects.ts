@@ -1,4 +1,4 @@
-import { IfEmpty, IfHasTail, IfFinite, Head, Tail } from "./Tuples.js";
+import { IfEmpty, IfHasTail, IfFinite, Head, Tail } from "./Tuples";
 
 /**
  * Merges a tuple of objects, flattening into a single object.
