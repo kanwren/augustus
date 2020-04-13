@@ -118,10 +118,11 @@ export namespace Schemas {
 
     /**
      * Function to convert a literal value into a schema that validates that
-     * value.
+     * value. Equality is determined based on the requirements of Object.is().
+     * If looser equality is needed, use 'primitive'.
      */
     export function literal<T>(value: T): Schema<T, T> {
-        return { encode: id, decode: id, validate: (x: unknown): x is T => x === value };
+        return { encode: id, decode: id, validate: (x: unknown): x is T => Object.is(x, value) };
     }
 
     /**
