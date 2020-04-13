@@ -641,6 +641,14 @@ export namespace Schemas {
         );
     }
 
+    /**
+     * If a type is discriminated by some key, given a record of values
+     * associated with that key, use the key to discriminate on the type. This
+     * is useful for discriminated unions, where each branch of the union has a
+     * different literal type for some discriminating key. Note that this
+     * currently usually needs an explicit type declaration on the schema to
+     * figure out the domain and representation types.
+     */
     export function discriminating<
         T extends Record<D, PrimKey>,
         S extends Record<D, T[D]>,
