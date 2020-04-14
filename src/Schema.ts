@@ -722,7 +722,9 @@ export namespace LazySchemas {
      * Like 'Schemas.nonEmptyArrayOf', but allows for a lazy schema for
      * recursive types.
      */
-    export function nonEmptyArrayOf<T, S>(elementsSchema: () => Schema<T, S>): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
+    export function nonEmptyArrayOf<T, S>(
+        elementsSchema: () => Schema<T, S>
+    ): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
         const { encode, decode, validate } = arrayOf(elementsSchema);
         return {
             encode: encode as (value: NonEmptyArray<T>) => NonEmptyArray<S>,

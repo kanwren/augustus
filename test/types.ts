@@ -105,7 +105,7 @@ const testMappingCorrectRepr: Leibniz<
 
 // We currently need to help out the type inference here; changing this type
 // should cause a compile error, though.
-type TestDiscriminatingType = { disc: "foo", a: number } | { disc: "bar", b: string };
+type TestDiscriminatingType = { disc: "foo"; a: number; } | { disc: "bar"; b: string; };
 const testDiscriminating: Schema<TestDiscriminatingType, TestDiscriminatingType> =
     S.discriminating("disc", {
         foo: S.recordOf({ disc: S.literal("foo" as const), a: S.aNumber, }),

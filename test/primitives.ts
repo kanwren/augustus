@@ -3,7 +3,7 @@ import * as fc from "fast-check";
 
 import { CustomArbitraries as CA } from "./arbitraries";
 
-import { Schemas as S } from "../src/augustus"
+import { Schemas as S } from "../src/augustus";
 
 describe("aNumber", () => {
     const schema = S.aNumber;
