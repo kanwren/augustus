@@ -23,7 +23,7 @@ export interface Schema<T, S> {
  * An extension of a 'Schema' used for dependency injection, allowing us to
  * asymmetrically decode the representation type. An 'InjectSchema<T, D, B, S>'
  * represents a base 'Schema<B, S>' between a base domain type and its
- * serialized representation, with a way to inject a context/dependency 'D' to
+ * serializable representation, with a way to inject a context/dependency 'D' to
  * recover the true domain type 'T'.
  *
  * Assume we have a domain type that contains some context that should not be
@@ -34,11 +34,11 @@ export interface Schema<T, S> {
  * To get around the asymmetry of decoding with context injection, we create a
  * "base" domain type by forgetting the context/dependency from the true domain
  * type. We first create a regular schema to convert between the base domain
- * type and the serialized representation. We then extend this with the ability
- * to "project" from the true domain type into the base domain type ('T => B'),
- * by discarding the context. We also add a way to "inject" the context, which
- * yields a function that can instantiate the true domain type from the base
- * domain type ('B => T').
+ * type and the serializable representation. We then extend this with the
+ * ability to "project" from the true domain type into the base domain type ('T
+ * => B'), by discarding the context. We also add a way to "inject" the context,
+ * which yields a function that can instantiate the true domain type from the
+ * base domain type ('B => T').
  */
 export interface InjectSchema<T, D, B, S> extends Schema<B, S> {
     project(val: T): B;
@@ -126,8 +126,8 @@ export namespace Schemas {
     }
 
     /**
-     * Transform a schema in the contravariant position to serialization; given
-     * a way to encode and decode from a new domain type to the old domain type,
+     * Transform a schema in the contravariant position to encoding; given a way
+     * to encode and decode from a new domain type to the old domain type,
      * produce a new schema that has the new domain type.
      */
     export function contra<U, T, S>(
@@ -143,8 +143,8 @@ export namespace Schemas {
     }
 
     /**
-     * Transform a schema in the covariant position to serialization; given a
-     * way to encode and decode from a new representation type to the old
+     * Transform a schema in the covariant position to encoding; given a way to
+     * encode and decode from a new representation type to the old
      * representation type, and a new validator, produce a new schema that has
      * the new representation type.
      */
@@ -278,7 +278,7 @@ export namespace Schemas {
     }
 
     export function tupleOf<
-        // The structure of the serialized tuple
+        // The structure of the encoded tuple
         R extends Schema<unknown, unknown>[],
     >(...elementSchemas: R): Schema<RecordDomains<R>, RecordReprs<R>> {
         return {
@@ -298,13 +298,13 @@ export namespace Schemas {
     }
 
     /**
-     * Trivial serializer for empty array/tuple, the identity under tuple/array
+     * Trivial schema for empty array/tuple, the identity under tuple/array
      * concatenation.
      */
     export const anEmptyArray: Schema<[], []> = tupleOf();
 
     /**
-     * Serializes a raw object by serializing its keys.
+     * Encodes a raw object by encoding its keys.
      */
     export function object<V, R>(values: Schema<V, R>): Schema<Record<PrimKey, V>, Record<PrimKey, R>> {
         return {
@@ -338,12 +338,11 @@ export namespace Schemas {
     }
 
     /**
-     * Serializes an ES6 'Map'. We unfortunately cannot serialize it as an
-     * object, since a 'Map' is strictly more flexible; for example, `0` and
-     * `"0"` are considered different keys in a 'Map', but the same key in an
-     * object.
+     * Encodes an ES6 'Map'. We unfortunately cannot encode it as an object,
+     * since a 'Map' is strictly more flexible; for example, `0` and `"0"` are
+     * considered different keys in a 'Map', but the same key in an object.
      *
-     * When deserializing, if the same key is present multiple times, the last
+     * When decoding, if the same key is present multiple times, the last
      * occurrence's value will be kept.
      */
     export function map<K, V, KR, VR>(keys: Schema<K, KR>, values: Schema<V, VR>): Schema<Map<K, V>, [KR, VR][]> {
@@ -369,11 +368,11 @@ export namespace Schemas {
     }
 
     /**
-     * Serializes an ES6 'Set'. The set is simply serialized to an array of the
+     * Encodes an ES6 'Set'. The set is simply encoded as an array of the
      * representation type.
      *
-     * When deserializing, if the same value is present multiple times, the
-     * results will be the same as a call to the 'Set' constructor.
+     * When decoding, if the same value is present multiple times, the results
+     * will be the same as a call to the 'Set' constructor.
      */
     export function set<T, S>(schema: Schema<T, S>): Schema<Set<T>, S[]> {
         return {
@@ -444,16 +443,16 @@ export namespace Schemas {
     }
 
     /**
-     * Trivial serializer for empty object, the identity under object unions.
+     * Trivial schema for empty object, the identity under object unions.
      */
     export const anEmptyObject: Schema<{}, {}> = recordOf({});
 
     /**
-     * Serializes classes into records, like 'recordOf', but with custom
+     * Encodes classes into records, like 'recordOf', but with custom
      * reconstruction for class instances, such as using a constructor. When
      * decoding a representation, the values of the representation will first be
-     * recursively decoded, and then 'reconstruct' will be applied to the result to
-     * make the new instance. For example:
+     * recursively decoded, and then 'reconstruct' will be applied to the result
+     * to make the new instance. For example:
      *
      * <pre><code>
      * class Person {
@@ -471,7 +470,7 @@ export namespace Schemas {
      * </code></pre>
      */
     export function classOf<
-        // The structure of the serialized record
+        // The structure of the encoded record
         R extends Record<string, Schema<unknown, unknown>>,
         T extends RecordDomains<R>
     >(structure: R, reconstruct: (data: RecordDomains<R>) => T): Schema<T, RecordReprs<R>> {
@@ -482,9 +481,9 @@ export namespace Schemas {
      * Construct a schema for a type union, given schemas of either type.
      * Additionally requires type predicates in order to be able to determine
      * which schema to use when encoding. If the two types are trivially
-     * serializable (they have a 'Schema<T, T>'), consider using 'union'
-     * instead. Note that this is left-biased; if both types are the same, for
-     * example, the schema on the left will be tried first.
+     * encodable (they have a 'Schema<T, T>'), consider using 'union' instead.
+     * Note that this is left-biased; if both types are the same, for example,
+     * the schema on the left will be tried first.
      */
     export function unionOf<TL, SL, TR, SR>(
         isLeft: (x: TL | TR) => x is TL,
@@ -597,13 +596,13 @@ export namespace Schemas {
     }
 
     /**
-     * Construct a schema that serializes a value by its index in an array of
+     * Construct a schema that encodes a value by its index in an array of
      * possible values. This is a somewhat unsafe combinator, since any
-     * unrecognized value will throw an error. Furthermore, serialization
-     * requires an O(n) lookup via an 'indexOf', which is not performance
-     * optimal. This is also brittle, since changing the order of array elements
-     * can break the deserialization if your data is persistent. Only use this
-     * when you know what you're doing.
+     * unrecognized value will throw an error. Furthermore, encoding requires an
+     * O(n) lookup via an 'indexOf', which is not performance optimal. This is
+     * also brittle, since changing the order of array elements can break the
+     * decoding if your data is persistent. Only use this when you know what
+     * you're doing.
      */
     export function indexing<T>(values: T[]): Schema<T, number> {
         return contra(
@@ -611,7 +610,7 @@ export namespace Schemas {
             (x: T): number => {
                 const ix = values.indexOf(x);
                 if (ix < 0) {
-                    throw new Error(`Serialization error: attempted to serialize ${x} by index in ${values}`);
+                    throw new Error(`augustus: attempted to encode ${x} by index in ${values}`);
                 }
                 return ix;
             },
@@ -635,7 +634,7 @@ export namespace Schemas {
                         return k;
                     }
                 }
-                throw new Error(`Serialization error: attempted to serialize ${val} by key in ${values}`);
+                throw new Error(`augustus: attempted to encode ${val} by key in ${values}`);
             },
             (key: string): T => values[key],
         );
