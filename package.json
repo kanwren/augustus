@@ -5,6 +5,7 @@
   "main": "dist/augustus.umd.js",
   "module": "dist/augustus.es5.js",
   "types": "dist/types/augustus.d.ts",
+  "sideEffects": false,
   "files": [
     "dist"
   ],
@@ -46,5 +47,15 @@
   "bugs": {
     "url": "https://github.com/nprindle/augustus/issues"
   },
-  "homepage": "https://github.com/nprindle/augustus#readme"
+  "homepage": "https://github.com/nprindle/augustus#readme",
+  "keywords": [
+    "typescript",
+    "combinator",
+    "combinators",
+    "serialization",
+    "schema",
+    "schemas",
+    "validation",
+    "functional-programming"
+  ]
 }
