@@ -80,5 +80,95 @@ class        object            JSON string
 
 ## Usage
 
-TODO
+`augustus` uses combinators to build up `Schema`s:
+
+```typescript
+import { Schema, Schemas } from "@nprindle/augustus";
+
+// Trivial schema; numbers should be represented as numbers
+const schema: Schema<number, number> = Schemas.aNumber;
+
+schema.encode(4); // 4
+schema.decode(4); // 4
+
+// A Schema can validate that unknown data is the correct type
+const x: unknown = 4;
+schema.validate(x); // true
+
+// The validation can be used as a type predicate:
+if (schema.validate(x)) {
+    // Now, 'x' is a number
+    console.log(x * 2);
+}
+```
+
+Besides trivial schemas, there are many aggregate schemas, as well:
+
+```typescript
+import { Schemas as S, DomainOf } from "@nprindle/augustus";
+
+type ARecord = {
+    a: string;
+    b: number;
+    c: (boolean | null)[];
+    d: [Map<string, string>, Set<number>];
+};
+
+// Records
+const aRecordSchema = S.recordOf({
+    // Basic primitive types
+    a: S.aString,
+    b: S.aNumber,
+    // Unions and arrays
+    c: S.arrayOf(S.union(S.aNull, S.aBoolean)),
+    // Tuples, maps, sets
+    d: S.tupleOf(S.map(S.aString, S.aString), S.set(S.aNumber)),
+});
+
+// You can even recover the domain or representation type of a schema!
+type AlsoARecord = DomainOf<typeof aRecordSchema>; // same as ARecord
+```
+
+We can also serialize instances of classes:
+
+```typescript
+import { Schemas as S, DomainOf } from "@nprindle/augustus";
+
+class C {
+    constructor(readonly n: number) {}
+}
+
+// Provide a record of fields to serialize and a way to reconstruct a class
+// instance from the fields
+const schema = S.classOf({
+    n: S.aNumber,
+}, ({ n }) => new C(n));
+```
+
+It's often nice to define class schemas as static variables on the classes they
+encode.
+
+There are many more combinators for constructing schemas too, such as:
+
+* `contra`: given a base schema, transform the domain type
+* `co`: given a base schema, transform the representation type
+* `constrain`: don't change the type of a schema, but narrow the validation
+  to use an additional predicate
+    * Example: `constrain(aNumber, x => x >= 0)` to only validate positive
+      numbers
+    * `matching` constrains strings to match a regular expression
+* `asserting`: like `constrain`, but use a type predicate to narrow the
+  representation type
+* `indexing`: encode elements of an array using their index
+* `mapping`: encode elements of an object using their key
+    * This is useful for serializing multiton patterns, which often depend on
+      instance equality
+* `injecting`: handles situations where reconstructing the domain type
+  requires additional context, such as in dependency injection
+    * Uses a base domain type without the context
+    * Produces a special `InjectSchema`, with the ability to project into the
+      base domain type, and inject a base domain type with context to
+      reconstruct the true domain type
+* `discriminating`: handles discriminated unions based on the different values
+  of a discriminating key
 
