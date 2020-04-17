@@ -7,6 +7,13 @@ schemas that can marshal between domain and representation types, as well as
 safely validate the structure of deserialized data. It also provides utilities
 for safe JSON serialization/deserialization.
 
+* [Motivation](#motivation)
+    * [Validation](#validation)
+    * [Encoding and Serialization](#encoding-and-serialization)
+* [Usage](#usage)
+    * [Schemas](#schemas)
+    * [Serialization](#serialization)
+
 ## Motivation
 
 This library is designed to help on two fronts:
@@ -79,6 +86,8 @@ class        object            JSON string
 ```
 
 ## Usage
+
+### Schemas
 
 `augustus` uses combinators to build up `Schema`s:
 
@@ -171,4 +180,42 @@ There are many more combinators for constructing schemas too, such as:
       reconstruct the true domain type
 * `discriminating`: handles discriminated unions based on the different values
   of a discriminating key
+
+### Serialization
+
+If you have a schema, you can encode your domain types and serialize them to
+a JSON string using `jsonEncodeWith`:
+
+```typescript
+import { Schemas as S, jsonEncodeWith } from "@nprindle/augustus";
+
+const schema = S.arrayOf(S.aNumber);
+jsonEncodeWith([1, 2, 3], schema); // "[1,2,3]"
+```
+
+Similarly, if you have a JSON string, and you want to attempt to deserialize and
+decode it, you can use `jsonDecodeWith`. This returns a `DecodeResult`, which is
+one of the following:
+
+* A success, meaning that `JSON.parse` and `augustus`'s validation succeeded
+* A syntax error, meaning that `JSON.parse` failed
+    * Runtime exceptions thrown by `JSON.parse` are caught and returned on the
+      value-level instead
+* An invalid structure error, meaning that the value deserialized but didn't
+  match the expected structure
+
+```typescript
+import { Schemas as S, jsonDecodeWith } from "@nprindle/augustus";
+
+const schema = S.arrayOf(S.aNumber);
+
+jsonDecodeWith("[1,2,3]", schema);
+// { resultType: "success", result: [1, 2, 3] }
+
+jsonDecodeWith("[1,2,3", schema);
+// { resultType: "syntaxError", error: ... }
+
+jsonDecodeWith("true", schema);
+// { resultType: "invalidStructure" }
+```
 
