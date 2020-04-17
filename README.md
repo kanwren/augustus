@@ -1,5 +1,7 @@
 # augustus
 
+![Travis CI badge](https://travis-ci.com/nprindle/augustus.svg?branch=master)
+
 A work-in-progress library to construct combinators for serializing,
 deserializing, and validating data in TypeScript, agnostic of your serialization
 target. `augustus` uses a combinator-based approach, making it simple to compose
