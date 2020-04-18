@@ -205,7 +205,7 @@ ones are described in subsections below.
 
 #### `contra` and `co`
 
-These are used take a base schema and transform its domain type or the
+These are used take a base schema and transform its domain type or
 representation type, respectively.
 
 `contra` takes a base schema, as well as ways to transform between the new and
@@ -220,6 +220,7 @@ new domain        old domain        repr
            decode            decode
 |                 |                    |
 |                 |----base schema-----|
+|                                      |
 |------new schema after 'contra'-------|
 ```
 
@@ -336,7 +337,7 @@ context to reconstruct the true domain type. Here's an example:
 import { Schemas as S } from "@nprindle/augustus";
 
 class Sub {
-    // The 'context' is dependency injected, and should not be serialized.
+    // The 'context' is dependency injected, and should not be serialized
     constructor(readonly context: Super, readonly n: number) {}
 }
 
@@ -348,7 +349,7 @@ const incorrectSubSchema = S.classOf(
 );
 
 // Our 'base' domain type is { n: number }, the fields we want to serialize
-// without the 'Super' context.
+// without the 'Super' context
 const baseSchema = S.recordOf({ n: S.aNumber });
 
 // We use 'injecting' to get a special 'InjectSchema':
@@ -437,8 +438,8 @@ one of the following:
 
 * A success, meaning that `JSON.parse` and `augustus`'s validation succeeded
 * A syntax error, meaning that `JSON.parse` failed
-    * Runtime exceptions thrown by `JSON.parse` are caught and returned on the
-      value-level instead
+    * Runtime exceptions thrown by `JSON.parse` are caught and returned as part
+      of the return value instead
 * An invalid structure error, meaning that the value deserialized but didn't
   match the expected structure
 
