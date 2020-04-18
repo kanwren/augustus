@@ -130,7 +130,7 @@ if (schema.validate(x)) {
 }
 ```
 
-Many schemas for Javascript's primitive types are exposed:
+The following schemas for TypeScript's/JavaScript's primitive types are exposed:
 
 * `string`: `aString`
 * `number`: `aNumber`
@@ -140,7 +140,8 @@ Many schemas for Javascript's primitive types are exposed:
     * WARNING: if targeting JSON, `undefined` isn't representable. Be aware that
       serializing a top-level `undefined` will fail, and serializing an array
       with an element `undefined` will convert it into `null`. It's safe to use
-      as a value of an object, however.
+      as a value of an object, however; see the `optional` combinator for
+      details.
 
 Besides primitive schemas, there are many other useful basic and aggregate
 schemas, as well:
@@ -151,9 +152,10 @@ import { Schemas as S, DomainOf } from "@nprindle/augustus";
 type ARecord = {
     a: string;
     b: number;
-    c: (boolean | null)[];
-    d: [Map<string, string>, Set<number>];
-    e: "foo";
+    c: string | undefined;
+    d: (boolean | null)[];
+    e: [Map<string, string>, Set<number>];
+    f: "foo";
 };
 
 // Records
@@ -161,12 +163,14 @@ const aRecordSchema = S.recordOf({
     // Basic primitive types
     a: S.aString,
     b: S.aNumber,
+    // Optional keys
+    c: S.optional(S.aString),
     // Unions and arrays
-    c: S.arrayOf(S.union(S.aNull, S.aBoolean)),
+    d: S.arrayOf(S.union(S.aNull, S.aBoolean)),
     // Tuples, maps, sets
-    d: S.tupleOf(S.map(S.aString, S.aString), S.set(S.aNumber)),
+    e: S.tupleOf(S.map(S.aString, S.aString), S.set(S.aNumber)),
     // Literal types ('as const' is required for the literal type inference)
-    e: S.literal("foo" as const),
+    f: S.literal("foo" as const),
 });
 
 // You can even recover the domain or representation type of a schema!
