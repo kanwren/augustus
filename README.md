@@ -97,7 +97,18 @@ class        object            JSON string
 
 ### Schemas
 
-`augustus` uses combinators to build up `Schema`s. For example:
+`augustus` uses combinators to build up `Schema`s. A `Schema` consists of three
+things:
+
+```typescript
+interface Schema<Domain, Repr> {
+    encode(val: Domain): Repr;
+    decode(data: Repr): Domain;
+    validate(data: unknown): data is Repr;
+}
+```
+
+For example:
 
 ```typescript
 import { Schema, Schemas } from "@nprindle/augustus";
@@ -118,6 +129,18 @@ if (schema.validate(x)) {
     console.log(x * 2);
 }
 ```
+
+Many schemas for Javascript's primitive types are exposed:
+
+* `string`: `aString`
+* `number`: `aNumber`
+* `boolean`: `aBoolean`
+* `null`: `aNull`
+* `undefined`: `anUndefined`
+    * WARNING: if targeting JSON, `undefined` isn't representable. Be aware that
+      serializing a top-level `undefined` will fail, and serializing an array
+      with an element `undefined` will convert it into `null`. It's safe to use
+      as a value of an object, however.
 
 Besides primitive schemas, there are many other useful basic and aggregate
 schemas, as well:
