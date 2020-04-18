@@ -14,6 +14,8 @@ for safe JSON serialization/deserialization.
     * [Encoding and Serialization](#encoding-and-serialization)
 * [Usage](#usage)
     * [Schemas](#schemas)
+        * [Primitive schemas](#primitive-schemas)
+        * [Basic combinators](#basic-combinators)
         * [`contra` and `co`](#contra-and-co)
         * [`constrain` and `asserting`](#constrain-and-asserting)
         * [`indexing` and `mapping`](#indexing-and-mapping)
@@ -130,6 +132,8 @@ if (schema.validate(x)) {
 }
 ```
 
+#### Primitive schemas
+
 The following schemas for TypeScript's/JavaScript's primitive types are exposed:
 
 * `string`: `aString`
@@ -143,8 +147,10 @@ The following schemas for TypeScript's/JavaScript's primitive types are exposed:
       as a value of an object, however; see the `optional` combinator for
       details.
 
-Besides primitive schemas, there are many other useful basic and aggregate
-schemas, as well:
+#### Basic combinators
+
+Besides primitive schemas, there are many other useful basic schemas and
+combinators for aggregate schemas:
 
 ```typescript
 import { Schemas as S, DomainOf } from "@nprindle/augustus";
