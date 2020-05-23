@@ -4,9 +4,9 @@ node_js:
 - '12'
 
 install:
-- npm ci
+- npm ci --no-optional
 
 script:
 - npm run build
-# - npm run minify
+- npm test
 
