@@ -400,7 +400,7 @@ class Foo {
     }
 
     static schema = S.contra(
-        S.classOf({ sup: Super.schema, sub: Sub.schema }),
+        S.recordOf({ sup: Super.schema, sub: Sub.schema }),
         (f: Foo) => {
             const sup = f.sup;
             // Project the context out of the sub
@@ -418,7 +418,68 @@ class Foo {
 
 #### `lazy` and lazy aggregates
 
-TODO
+Sometimes, you may need to serialize recursive (or even mutually recursive!)
+types:
+
+```typescript
+interface ListNode {
+    data: number;
+    next: ListNode | null;
+}
+```
+
+But if you try to write a schema, you'll find that you need the `ListNode`
+schema in order to serialize one of the fields of a `ListNode`; that is, you
+need the schema to define the schema. In this case, you might try to write
+something like this:
+
+```typescript
+import { Schemas as S } from "@nprindle/augustus";
+
+const listNodeSchema = S.recordOf({
+    data: S.aNumber,
+    next: S.union(S.aNull, listNodeSchema),
+});
+```
+
+But this doesn't work, since you're using the variable before it's been defined.
+One solution to this is to use `lazy`, which accepts a no-args function `() =>
+Schema<T, S>` and turns it into a schema, pushing the function call inwards.
+This way, we can defer evaluation of the constant with minimal overhead:
+
+```typescript
+import { Schemas as S } from "@nprindle/augustus";
+
+const listNodeSchema = S.recordOf({
+    data: S.aNumber,
+    next: S.union(S.aNull, S.lazy(() => listNodeSchema)),
+});
+```
+
+In general, it is usually good practice to narrow the scope of `lazy` as much as
+possible. For example, here we put it only around `listNodeSchema`, rather than
+`S.lazy(() => S.union(S.aNull, listNodeSchema))` or around the entire schema.
+
+However, for schemas that encode aggregates, such as `arrayOf`, we don't want to
+re-evaluate the no-args function for every element of the array during
+evaluation; we really only need to evaluate it once. For situations like these,
+there is a separate `LazySchemas` namespace containing alternate lazy versions
+of the aggregate combinators:
+
+```typescript
+import { Schemas as S, LazySchemas as LS } from "@nprindle/augustus";
+
+interface TreeNode {
+    data: number;
+    children: TreeNode[];
+}
+
+const treeNodeSchema = S.recordOf({
+    data: S.aNumber,
+    // more efficient than S.arrayOf(S.lazy(() => treeNodeSchema))
+    children: LS.arrayOf(() => treeNodeSchema),
+});
+```
 
 ### Serialization
 
