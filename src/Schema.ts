@@ -681,6 +681,23 @@ export namespace Schemas {
             },
         };
     }
+
+    /**
+     * 'Schema' for 'BigInt'. JSON doesn't support 'BigInt's, so we just
+     * serialize it as a string instead.
+     */
+    export const aBigInt: Schema<BigInt, string> = contra(
+        constrain(aString, x => {
+            try {
+                BigInt(x);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }),
+        (x: BigInt): string => x.toString(),
+        (data: string): BigInt => BigInt(data),
+    );
 }
 
 // Ugly helper types for object- or tuple-based schemas
