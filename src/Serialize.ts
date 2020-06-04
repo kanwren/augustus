@@ -1,10 +1,21 @@
 import { Schema } from "./Schema.js";
 
+// Recursive JSON type definition. Adapted from here:
+// https://github.com/microsoft/TypeScript/issues/3496#issuecomment-128553540
+type JsonValue = string | number | boolean | JSONObject | JSONArray;
+
+// Evil hacks because interface base type resolution is deferred
+interface JSONObject {
+    // undefined object values end up working, since they just end up missing
+    [x: string]: JsonValue | undefined;
+}
+interface JSONArray extends Array<JsonValue> {}
+
 /**
  * Encode JSON using 'JSON.stringify', using a particular schema for
  * serialization into a JSON-representable value.
  */
-export function jsonEncodeWith<T, S>(value: T, schema: Schema<T, S>): string {
+export function jsonEncodeWith<T, S extends JsonValue>(value: T, schema: Schema<T, S>): string {
     return JSON.stringify(schema.encode(value));
 }
 
@@ -14,7 +25,7 @@ export function jsonEncodeWith<T, S>(value: T, schema: Schema<T, S>): string {
  * the JSON was parsed but did not meet our expected structure.
  */
 export type DecodeResult<T> =
-    { resultType: "success"; result: T; }
+    | { resultType: "success"; result: T; }
     | { resultType: "syntaxError"; error: SyntaxError; }
     | { resultType: "invalidStructure"; };
 
@@ -22,7 +33,7 @@ export type DecodeResult<T> =
  * Decode a JSON string using 'JSON.parse()', using a particular schema for
  * validation of and deserialization from the encoded structure.
  */
-export function jsonDecodeWith<T, S>(json: string, schema: Schema<T, S>): DecodeResult<T> {
+export function jsonDecodeWith<T, S extends JsonValue>(json: string, schema: Schema<T, S>): DecodeResult<T> {
     try {
         const result = JSON.parse(json);
         if (schema.validate(result)) {
@@ -49,7 +60,7 @@ export function jsonDecodeWith<T, S>(json: string, schema: Schema<T, S>): Decode
 /**
  * Like 'jsonDecodeWith', but throws an exception if parsing/validation fails.
  */
-export function unsafeJsonDecodeWith<T, S>(json: string, schema: Schema<T, S>): T {
+export function unsafeJsonDecodeWith<T, S extends JsonValue>(json: string, schema: Schema<T, S>): T {
     const result = JSON.parse(json);
     if (schema.validate(result)) {
         return schema.decode(result);
