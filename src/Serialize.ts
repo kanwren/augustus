@@ -2,7 +2,7 @@ import { Schema } from "./Schema.js";
 
 // Recursive JSON type definition. Adapted from here:
 // https://github.com/microsoft/TypeScript/issues/3496#issuecomment-128553540
-type JsonValue = string | number | boolean | JSONObject | JSONArray;
+type JsonValue = string | number | boolean | null | JSONObject | JSONArray;
 
 // Evil hacks because interface base type resolution is deferred
 interface JSONObject {

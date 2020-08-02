@@ -2,7 +2,7 @@
 // equality. If this compiles, the tests have passed. This can't catch stray
 // 'any's, so watch out for those.
 
-import { DomainOf, ReprOf, Schema, Schemas as S } from "../src/augustus";
+import { DomainOf, ReprOf, Schema, Schemas as S, jsonEncodeWith, jsonDecodeWith } from "../src/augustus";
 
 type Leibniz<A, B> = ((a: A) => B) & ((b: B) => A);
 
@@ -120,6 +120,16 @@ const testDiscriminatingCorrectDomain: Leibniz<
     TestDiscriminatingType
 > = id;
 
+// Test that all of the values are accepted by jsonEncodeWith
+const testJsonEncode = {
+    encodeString: jsonEncodeWith("foo", S.aString),
+    encodeNumber: jsonEncodeWith(3, S.aNumber),
+    encodeBoolean: jsonEncodeWith(true, S.aBoolean),
+    encodeNull: jsonEncodeWith(null, S.aNull),
+    encodeObject: jsonEncodeWith({}, S.anEmptyObject),
+    encodeArray: jsonEncodeWith([], S.anEmptyArray),
+};
+
 describe("types", () => {
     it("should compile", () => {
         testTupleOfSameDomainRepr;
@@ -148,5 +158,7 @@ describe("types", () => {
 
         testDiscriminatingSameDomainRepr;
         testDiscriminatingCorrectDomain;
+
+        testJsonEncode;
     });
 });
