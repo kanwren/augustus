@@ -210,7 +210,7 @@ export namespace Schemas {
      * Trivial 'Schema' for 'string'.
      */
     export const aString: Schema<string, string> = primitive((data: unknown): data is string => {
-        return typeof data === "string" || data instanceof String;
+        return typeof data === "string";
     });
 
     /**
