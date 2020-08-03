@@ -4,7 +4,7 @@
 
 import { DomainOf, ReprOf, Schema, Schemas as S, jsonEncodeWith, jsonDecodeWith } from "../src/augustus";
 
-type Leibniz<A, B> = ((a: A) => B) & ((b: B) => A);
+type Eq<A, B> = ((a: A) => B) & ((b: B) => A);
 
 function id<A>(x: A): A {
     return x;
@@ -17,11 +17,11 @@ const testTupleOf = S.tupleOf(
     S.anEmptyArray,
     S.anEmptyObject,
 );
-const testTupleOfSameDomainRepr: Leibniz<
+const testTupleOfSameDomainRepr: Eq<
     DomainOf<typeof testTupleOf>,
     ReprOf<typeof testTupleOf>
 > = id;
-const testTupleOfCorrectDomain: Leibniz<
+const testTupleOfCorrectDomain: Eq<
     DomainOf<typeof testTupleOf>,
     [string, 3, null[], [], {}]
 > = id;
@@ -31,61 +31,61 @@ const testRecordOf = S.recordOf({
     bar: S.literal(3 as const),
     baz: S.arrayOf(S.aNull),
 });
-const testRecordOfSameDomainRepr: Leibniz<
+const testRecordOfSameDomainRepr: Eq<
     DomainOf<typeof testRecordOf>,
     ReprOf<typeof testRecordOf>
 > = id;
-const testRecordOfCorrectDomain: Leibniz<
+const testRecordOfCorrectDomain: Eq<
     DomainOf<typeof testRecordOf>,
     { foo: string; bar: 3; baz: null[]; }
 > = id;
 
 const testMap = S.map(S.aString, S.aNumber);
-const testMapCorrectDomain: Leibniz<
+const testMapCorrectDomain: Eq<
     DomainOf<typeof testMap>,
     Map<string, number>
 > = id;
-const testMapCorrectRepr: Leibniz<
+const testMapCorrectRepr: Eq<
     ReprOf<typeof testMap>,
     [string, number][]
 > = id;
 
 const testSet = S.set(S.arrayOf(S.aBoolean));
-const testSetCorrectDomain: Leibniz<
+const testSetCorrectDomain: Eq<
     DomainOf<typeof testSet>,
     Set<boolean[]>
 > = id;
-const testSetCorrectRepr: Leibniz<
+const testSetCorrectRepr: Eq<
     ReprOf<typeof testSet>,
     boolean[][]
 > = id;
 
 const testUnion = S.union(S.anEmptyArray, S.aNull);
-const testUnionSameDomainRepr: Leibniz<
+const testUnionSameDomainRepr: Eq<
     DomainOf<typeof testUnion>,
     ReprOf<typeof testUnion>
 > = id;
-const testUnionCorrectDomain: Leibniz<
+const testUnionCorrectDomain: Eq<
     ReprOf<typeof testUnion>,
     [] | null
 > = id;
 
 const testAsserting = S.asserting(S.aString, (x): x is "foo" => x === "foo");
-const testAssertingCorrectDomain: Leibniz<
+const testAssertingCorrectDomain: Eq<
     DomainOf<typeof testAsserting>,
     string
 > = id;
-const testAssertingCorrectRepr: Leibniz<
+const testAssertingCorrectRepr: Eq<
     ReprOf<typeof testAsserting>,
     "foo"
 > = id;
 
 const testIndexing = S.indexing([null]);
-const testIndexingCorrectDomain: Leibniz<
+const testIndexingCorrectDomain: Eq<
     DomainOf<typeof testIndexing>,
     null
 > = id;
-const testIndexingCorrectRepr: Leibniz<
+const testIndexingCorrectRepr: Eq<
     ReprOf<typeof testIndexing>,
     number
 > = id;
@@ -94,11 +94,11 @@ const testMapping = S.mapping({
     foo: 10,
     bar: 1,
 });
-const testMappingCorrectDomain: Leibniz<
+const testMappingCorrectDomain: Eq<
     DomainOf<typeof testMapping>,
     number
 > = id;
-const testMappingCorrectRepr: Leibniz<
+const testMappingCorrectRepr: Eq<
     ReprOf<typeof testMapping>,
     string
 > = id;
@@ -111,11 +111,11 @@ const testDiscriminating: Schema<TestDiscriminatingType, TestDiscriminatingType>
         foo: S.recordOf({ disc: S.literal("foo" as const), a: S.aNumber, }),
         bar: S.recordOf({ disc: S.literal("bar" as const), b: S.aString, }),
     });
-const testDiscriminatingSameDomainRepr: Leibniz<
+const testDiscriminatingSameDomainRepr: Eq<
     DomainOf<typeof testDiscriminating>,
     ReprOf<typeof testDiscriminating>
 > = id;
-const testDiscriminatingCorrectDomain: Leibniz<
+const testDiscriminatingCorrectDomain: Eq<
     DomainOf<typeof testDiscriminating>,
     TestDiscriminatingType
 > = id;
@@ -129,6 +129,30 @@ const testJsonEncode = {
     encodeObject: jsonEncodeWith({}, S.anEmptyObject),
     encodeArray: jsonEncodeWith([], S.anEmptyArray),
 };
+
+// Test that a Schema<_, undefined> is not accepted by jsonEncodeWith
+const testJsonEncodeBadUndefined = jsonEncodeWith.bind(null, undefined as any);
+const testJsonEncodeBad: Eq<
+    ReprOf<Parameters<typeof testJsonEncodeBadUndefined>[0]> & ReprOf<typeof S.anUndefined>,
+    never
+> = id;
+
+// Test that all of the values are accepted by jsonEncodeWith
+const testJsonDecode = {
+    decodeString: jsonDecodeWith("", S.aString),
+    decodeNumber: jsonDecodeWith("", S.aNumber),
+    decodeBoolean: jsonDecodeWith("", S.aBoolean),
+    decodeNull: jsonDecodeWith("", S.aNull),
+    decodeObject: jsonDecodeWith("", S.anEmptyObject),
+    decodeArray: jsonDecodeWith("", S.anEmptyArray),
+};
+
+// Test that a Schema<_, undefined> is not accepted by jsonDecodeWith
+const testJsonDecodeBadUndefined = jsonDecodeWith.bind(null, "");
+const testJsonDecodeBad: Eq<
+    ReprOf<Parameters<typeof testJsonDecodeBadUndefined>[0]> & ReprOf<typeof S.anUndefined>,
+    never
+> = id;
 
 describe("types", () => {
     it("should compile", () => {
@@ -160,5 +184,9 @@ describe("types", () => {
         testDiscriminatingCorrectDomain;
 
         testJsonEncode;
+        testJsonEncodeBad;
+
+        testJsonDecode;
+        testJsonDecodeBad;
     });
 });
