@@ -2,6 +2,7 @@
 // equality. If this compiles, the tests have passed. This can't catch stray
 // 'any's, so watch out for those.
 
+import "mocha";
 import { DomainOf, ReprOf, Schema, Schemas as S, jsonEncodeWith, jsonDecodeWith } from "../src/augustus";
 
 function test<_ = "">(_: () => void): void {}
