@@ -5,53 +5,55 @@ import { CustomArbitraries as CA } from "./arbitraries";
 
 import { Schemas as S } from "../src/augustus";
 
-describe("map", () => {
-    const schema = S.map(S.aString, S.aNumber);
-    const arb = CA.map(fc.string(), CA.anyDouble);
-    it("should roundtrip", () => {
-        fc.assert(fc.property(arb, x => {
-            const result = schema.decode(schema.encode(x));
-            if (x.size !== result.size) {
-                return false;
-            }
-            for (const key of Array.from(x.keys())) {
-                if (!result.has(key)) {
+describe("aggregates", () => {
+    describe("map", () => {
+        const schema = S.map(S.aString, S.aNumber);
+        const arb = CA.map(fc.string(), CA.anyDouble);
+        it("should roundtrip", () => {
+            fc.assert(fc.property(arb, x => {
+                const result = schema.decode(schema.encode(x));
+                if (x.size !== result.size) {
                     return false;
                 }
-                if (!Object.is(x.get(key), result.get(key))) {
-                    return false;
+                for (const key of Array.from(x.keys())) {
+                    if (!result.has(key)) {
+                        return false;
+                    }
+                    if (!Object.is(x.get(key), result.get(key))) {
+                        return false;
+                    }
                 }
-            }
-            return true;
-        }));
+                return true;
+            }));
+        });
+        it("should validate map representations", () => {
+            fc.assert(fc.property(fc.array(fc.tuple(fc.string(), CA.anyDouble)), x => {
+                return schema.validate(x);
+            }));
+        });
     });
-    it("should validate map representations", () => {
-        fc.assert(fc.property(fc.array(fc.tuple(fc.string(), CA.anyDouble)), x => {
-            return schema.validate(x);
-        }));
-    });
-});
 
-describe("set", () => {
-    const schema = S.set(S.aString);
-    const arb = CA.set(fc.string());
-    it("should roundtrip", () => {
-        fc.assert(fc.property(arb, x => {
-            const result = schema.decode(schema.encode(x));
-            if (x.size !== result.size) {
-                return false;
-            }
-            for (const val of Array.from(x)) {
-                if (!result.has(val)) {
+    describe("set", () => {
+        const schema = S.set(S.aString);
+        const arb = CA.set(fc.string());
+        it("should roundtrip", () => {
+            fc.assert(fc.property(arb, x => {
+                const result = schema.decode(schema.encode(x));
+                if (x.size !== result.size) {
                     return false;
                 }
-            }
-            return true;
-        }));
+                for (const val of Array.from(x)) {
+                    if (!result.has(val)) {
+                        return false;
+                    }
+                }
+                return true;
+            }));
+        });
+        it("should validate set representations", () => {
+            fc.assert(fc.property(fc.array(fc.string()), x => {
+                return schema.validate(x);
+            }));
+        });
     });
-    it("should validate map representations", () => {
-        fc.assert(fc.property(fc.array(fc.string()), x => {
-            return schema.validate(x);
-        }));
-    });
-});
+})
