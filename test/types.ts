@@ -5,23 +5,7 @@
 import "mocha";
 import { DomainOf, ReprOf, Schema, Schemas as S, jsonEncodeWith, jsonDecodeWith } from "../src/augustus";
 
-function test<_ = "">(_: () => void): void {}
-
-type Eq<A, B> = ((a: A) => B) & ((b: B) => A);
-
-function refl<A>(x: A): A {
-    return x;
-}
-
-function testEq<A, B, _ = "">(p: Eq<A, B>): Eq<A, B> {
-    return p;
-}
-
-export type NotSub<A, B> = Eq<A extends B ? true : false, false>;
-
-export function testNotSub<A, B, _doc = "">(p: NotSub<A, B>): NotSub<A, B> {
-    return p;
-}
+import { refl, test, testEq, testNotSub } from "@nprindle/leibniz";
 
 test<"tupleOf">(() => {
     const testTupleOf = S.tupleOf(

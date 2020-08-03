@@ -20,6 +20,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@nprindle/leibniz": "^0.1.0",
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@types/chai": "^4.2.11",
