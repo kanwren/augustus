@@ -3,7 +3,7 @@
 // 'any's, so watch out for those.
 
 import "mocha";
-import { DomainOf, ReprOf, Schema, Schemas as S, jsonEncodeWith, jsonDecodeWith } from "../src/augustus";
+import { DomainOf, ReprOf, Schema, Schemas as S, Json } from "../src/augustus";
 
 import { refl, test, testEq, testNotSub } from "@nprindle/leibniz";
 
@@ -168,16 +168,16 @@ test<"discriminating">(() => {
 test<"jsonEncodeWith and jsonDecodeWith">(() => {
     // Test that all of the values are accepted by jsonEncodeWith
     test<"jsonEncodeWith accepts correct types">(() => [
-        jsonEncodeWith("foo", S.aString),
-        jsonEncodeWith(3, S.aNumber),
-        jsonEncodeWith(true, S.aBoolean),
-        jsonEncodeWith(null, S.aNull),
-        jsonEncodeWith({}, S.anEmptyObject),
-        jsonEncodeWith([], S.anEmptyArray),
-        jsonEncodeWith({ foo: undefined }, S.recordOf({ foo: S.anUndefined })),
+        Json.jsonEncodeWith("foo", S.aString),
+        Json.jsonEncodeWith(3, S.aNumber),
+        Json.jsonEncodeWith(true, S.aBoolean),
+        Json.jsonEncodeWith(null, S.aNull),
+        Json.jsonEncodeWith({}, S.anEmptyObject),
+        Json.jsonEncodeWith([], S.anEmptyArray),
+        Json.jsonEncodeWith({ foo: undefined }, S.recordOf({ foo: S.anUndefined })),
     ]);
 
-    const testJsonEncodeBadUndefined = jsonEncodeWith.bind(null, undefined as any);
+    const testJsonEncodeBadUndefined = Json.jsonEncodeWith.bind(null, undefined as any);
     testNotSub<
         ReprOf<typeof S.anUndefined>,
         ReprOf<Parameters<typeof testJsonEncodeBadUndefined>[0]>,
@@ -193,17 +193,17 @@ test<"jsonEncodeWith and jsonDecodeWith">(() => {
 
     // Test that all of the values are accepted by jsonEncodeWith
     test<"jsonDecodeWith accepts correct types">(() => [
-        jsonDecodeWith("", S.aString),
-        jsonDecodeWith("", S.aNumber),
-        jsonDecodeWith("", S.aBoolean),
-        jsonDecodeWith("", S.aNull),
-        jsonDecodeWith("", S.anEmptyObject),
-        jsonDecodeWith("", S.anEmptyArray),
-        jsonDecodeWith("", S.recordOf({ foo: S.anUndefined })),
+        Json.jsonDecodeWith("", S.aString),
+        Json.jsonDecodeWith("", S.aNumber),
+        Json.jsonDecodeWith("", S.aBoolean),
+        Json.jsonDecodeWith("", S.aNull),
+        Json.jsonDecodeWith("", S.anEmptyObject),
+        Json.jsonDecodeWith("", S.anEmptyArray),
+        Json.jsonDecodeWith("", S.recordOf({ foo: S.anUndefined })),
     ]);
 
     // Test that a Schema<_, undefined> is not accepted by jsonDecodeWith
-    const testJsonDecodeBadUndefined = jsonDecodeWith.bind(null, "");
+    const testJsonDecodeBadUndefined = Json.jsonDecodeWith.bind(null, "");
     testNotSub<
         ReprOf<typeof S.anUndefined>,
         ReprOf<Parameters<typeof testJsonDecodeBadUndefined>[0]>,

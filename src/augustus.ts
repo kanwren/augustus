@@ -1,2 +1,4 @@
-export { Schema, InjectSchema, DomainOf, ReprOf, Schemas, LazySchemas } from "./Schema";
-export { jsonEncodeWith, DecodeResult, jsonDecodeWith } from "./Serialize";
+export * from "./Schema";
+export * as Schemas from "./Schemas";
+export * as LazySchemas from "./LazySchemas";
+export * as Json from "./Json";

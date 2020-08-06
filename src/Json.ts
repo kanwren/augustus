@@ -1,4 +1,6 @@
-import { Schema } from "./Schema.js";
+// Functions for dealing with serialization to and from JSON
+
+import { Schema } from "./Schema";
 
 // Recursive JSON type definition. Adapted from here:
 // https://github.com/microsoft/TypeScript/issues/3496#issuecomment-128553540
