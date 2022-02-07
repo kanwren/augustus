@@ -157,6 +157,14 @@ export const aNull: Schema<null, null> = primitive((data: unknown): data is null
 });
 
 /**
+ * Trivial 'Schema' for 'symbol'. This is not used often, since you can't
+ * roundtrip a symbol into a string, for example.
+ */
+export const aSymbol: Schema<symbol, symbol> = primitive((data: unknown): data is symbol => {
+    return typeof data === "symbol";
+})
+
+/**
  * Trivial 'Schema' for 'undefined'.
  *
  * WARNING: Note that 'undefined' is not always safe to use in JSON, such as
@@ -547,10 +555,17 @@ export function indexing<T>(values: T[]): Schema<T, number> {
  * Like 'indexing', except use an object mapping string values instead of an
  * array with indices. All of the same restrictions and warnings apply.
  */
-export function mapping<T>(values: Record<string, T>): Schema<T, string> {
+export function mapping<K extends string, T>(values: Record<K, T>): Schema<T, K> {
+    const keyOut: Schema<string, K> = asserting(
+        aString,
+        (s: string): s is K => s in values
+    );
+    // This is an unsafe cast, but it can be verified below that only `K`s
+    // are passed below
+    const key: Schema<K, K> = keyOut as Schema<K, K>;
     return contra(
-        constrain(aString, s => s in values),
-        (val: T): string => {
+        key,
+        (val: T): K => {
             for (const k in values) {
                 if (values[k] === val) {
                     return k;
@@ -558,7 +573,7 @@ export function mapping<T>(values: Record<string, T>): Schema<T, string> {
             }
             throw new Error(`augustus: attempted to encode ${val} by key in ${values}`);
         },
-        (key: string): T => values[key],
+        (key: K): T => values[key],
     );
 }
 
