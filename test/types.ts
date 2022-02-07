@@ -139,7 +139,7 @@ test<"mapping">(() => {
     >(refl);
     testEq<
         ReprOf<typeof testMapping>,
-        string,
+        "foo" | "bar",
         "mapping correct repr"
     >(refl);
 });
@@ -165,55 +165,55 @@ test<"discriminating">(() => {
     >(refl);
 });
 
-test<"jsonEncodeWith and jsonDecodeWith">(() => {
-    // Test that all of the values are accepted by jsonEncodeWith
-    test<"jsonEncodeWith accepts correct types">(() => [
-        Json.jsonEncodeWith("foo", S.aString),
-        Json.jsonEncodeWith(3, S.aNumber),
-        Json.jsonEncodeWith(true, S.aBoolean),
-        Json.jsonEncodeWith(null, S.aNull),
-        Json.jsonEncodeWith({}, S.anEmptyObject),
-        Json.jsonEncodeWith([], S.anEmptyArray),
-        Json.jsonEncodeWith({ foo: undefined }, S.recordOf({ foo: S.anUndefined })),
+test<"encodeWith and decodeWith">(() => {
+    // Test that all of the values are accepted by encodeWith
+    test<"encodeWith accepts correct types">(() => [
+        Json.encodeWith("foo", S.aString),
+        Json.encodeWith(3, S.aNumber),
+        Json.encodeWith(true, S.aBoolean),
+        Json.encodeWith(null, S.aNull),
+        Json.encodeWith({}, S.anEmptyObject),
+        Json.encodeWith([], S.anEmptyArray),
+        Json.encodeWith({ foo: undefined }, S.recordOf({ foo: S.anUndefined })),
     ]);
 
-    const testJsonEncodeBadUndefined = Json.jsonEncodeWith.bind(null, undefined as any);
+    const testJsonEncodeBadUndefined = Json.encodeWith.bind(null, undefined as any);
     testNotSub<
         ReprOf<typeof S.anUndefined>,
         ReprOf<Parameters<typeof testJsonEncodeBadUndefined>[0]>,
-        "jsonEncodeWith does not accept undefined"
+        "encodeWith does not accept undefined"
     >(refl);
 
     const undefinedArraySchema = S.arrayOf(S.anUndefined);
     testNotSub<
         ReprOf<typeof undefinedArraySchema>,
         ReprOf<Parameters<typeof testJsonEncodeBadUndefined>[0]>,
-        "jsonEncodeWith does not accept undefined[]"
+        "encodeWith does not accept undefined[]"
     >(refl);
 
-    // Test that all of the values are accepted by jsonEncodeWith
-    test<"jsonDecodeWith accepts correct types">(() => [
-        Json.jsonDecodeWith("", S.aString),
-        Json.jsonDecodeWith("", S.aNumber),
-        Json.jsonDecodeWith("", S.aBoolean),
-        Json.jsonDecodeWith("", S.aNull),
-        Json.jsonDecodeWith("", S.anEmptyObject),
-        Json.jsonDecodeWith("", S.anEmptyArray),
-        Json.jsonDecodeWith("", S.recordOf({ foo: S.anUndefined })),
+    // Test that all of the values are accepted by encodeWith
+    test<"decodeWith accepts correct types">(() => [
+        Json.decodeWith("", S.aString),
+        Json.decodeWith("", S.aNumber),
+        Json.decodeWith("", S.aBoolean),
+        Json.decodeWith("", S.aNull),
+        Json.decodeWith("", S.anEmptyObject),
+        Json.decodeWith("", S.anEmptyArray),
+        Json.decodeWith("", S.recordOf({ foo: S.anUndefined })),
     ]);
 
-    // Test that a Schema<_, undefined> is not accepted by jsonDecodeWith
-    const testJsonDecodeBadUndefined = Json.jsonDecodeWith.bind(null, "");
+    // Test that a Schema<_, undefined> is not accepted by decodeWith
+    const testJsonDecodeBadUndefined = Json.decodeWith.bind(null, "");
     testNotSub<
         ReprOf<typeof S.anUndefined>,
         ReprOf<Parameters<typeof testJsonDecodeBadUndefined>[0]>,
-        "jsonDecodeWith does not accept undefined"
+        "decodeWith does not accept undefined"
     >(refl);
 
     testNotSub<
         ReprOf<typeof S.anUndefined>,
         ReprOf<Parameters<typeof testJsonDecodeBadUndefined>[0]>,
-        "jsonDecodeWith does not accept undefined[]"
+        "decodeWith does not accept undefined[]"
     >(refl);
 });
 
