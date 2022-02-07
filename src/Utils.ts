@@ -13,5 +13,5 @@ export function impossible(_: never): never {
  */
 export function id<T>(x: T): T {
     return x;
-};
+}
 

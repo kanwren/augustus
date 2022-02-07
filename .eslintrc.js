@@ -32,11 +32,7 @@ const possibleErrorRules = {
 
   // Disallow truthy checks on variables that must be truthy based on their
   // type
-  "@typescript-eslint/no-unnecessary-condition": ["error", {
-    "ignoreRhs": true,
-    "allowConstantLoopConditions": true,
-    "checkArrayPredicates": true,
-  }],
+  "@typescript-eslint/no-unnecessary-condition": "error",
 
   // Prefer things like `x || y` over `x ? x : y` or `!x` over `x ? false : true`
   "no-unneeded-ternary": ["error", {
