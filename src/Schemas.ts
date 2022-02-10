@@ -619,21 +619,3 @@ export function discriminating<
     };
 }
 
-/**
- * 'Schema' for 'BigInt'. JSON and other formats don't support 'BigInt's, so we
- * just serialize it as a string instead. If your target does support 'BigInt's,
- * you can use 'primitive' to make a trivial combinator for it.
- */
-export const aBigInt: Schema<BigInt, string> = contra(
-    constrain(aString, x => {
-        try {
-            BigInt(x);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }),
-    (x: BigInt): string => x.toString(),
-    (data: string): BigInt => BigInt(data),
-);
-
