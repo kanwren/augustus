@@ -1,5 +1,6 @@
 // A set of data-oriented combinators for building up complex schemas
 
+import { Head, Tail, Snoc } from "./Tuples";
 import { Schema, InjectSchema, DomainOf, ReprOf } from "./Schema";
 import { NonEmptyArray, id, impossible } from "./Utils";
 
@@ -7,16 +8,6 @@ import { NonEmptyArray, id, impossible } from "./Utils";
  * The possible types of the keys of an object
  */
 type PrimKey = string | number | symbol;
-
-// Ugly helper types for object- or tuple-based schemas
-type RecordDomains<R extends Record<string, Schema<unknown, unknown>> | Schema<unknown, unknown>[]> = {
-    // Replace the schemas in an object/array with the domains of the schemas
-    [K in keyof R]: R[K] extends Schema<infer A, unknown> ? A : never;
-} & {};
-type RecordReprs<R extends Record<string, Schema<unknown, unknown>> | Schema<unknown, unknown>[]> = {
-    // Replace the schemas in an object/array with the representations of the schemas
-    [K in keyof R]: R[K] extends Schema<unknown, infer B> ? B : never;
-} & {};
 
 /**
  * Basic schema constructor function. It is also possible to just make the
@@ -199,30 +190,41 @@ export function arrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<T[], S[]> {
 export function nonEmptyArrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
     const { encode, decode, validate } = arrayOf(elementsSchema);
     return {
-        encode: encode as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
-        decode: decode as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
+        encode: encode as any as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
+        decode: decode as any as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
         validate: (data: unknown): data is NonEmptyArray<S> => {
             return Array.isArray(data) && data.length >= 1 && validate(data);
         },
     };
 }
 
+type ZipTuplesToSchemas<Ds extends unknown[], Rs extends unknown[], Prefix extends unknown[] = []> =
+    Ds extends [infer DsHead, ...(infer DsTail)]
+        ? Rs extends [infer RsHead, ...(infer RsTail)]
+            ? ZipTuplesToSchemas<DsTail, RsTail, Snoc<Prefix, Schema<DsHead, RsHead>>>
+            : never
+        : Rs extends [infer _, ...(infer _)]
+            ? never
+            : Prefix;
+
+// TODO: help out type inference here
 export function tupleOf<
-    // The structure of the encoded tuple
-    R extends Schema<unknown, unknown>[],
->(...elementSchemas: R): Schema<RecordDomains<R>, RecordReprs<R>> {
+    Ds extends unknown[],
+    Rs extends unknown[],
+>(...elementSchemas: ZipTuplesToSchemas<Ds, Rs>): Schema<Ds, Rs> {
     return {
-        encode: (tup: RecordDomains<R>) => {
-            return tup.map((x, i) => elementSchemas[i].encode(x)) as RecordReprs<R>;
+        // can't map in a typesafe way :(
+        encode: (tup: Ds) => {
+            return tup.map((x, i) => (elementSchemas[i] as any).encode(x)) as Rs;
         },
-        decode: (tup: RecordReprs<R>) => {
-            return tup.map((x, i) => elementSchemas[i].decode(x)) as RecordDomains<R>;
+        decode: (tup: Rs) => {
+            return tup.map((x, i) => (elementSchemas[i] as any).decode(x)) as Ds;
         },
-        validate: (data: unknown): data is RecordReprs<R> => {
+        validate: (data: unknown): data is Rs => {
             if (!Array.isArray(data) || data.length !== elementSchemas.length) {
                 return false;
             }
-            return elementSchemas.every((schema, i) => schema.validate(data[i]));
+            return elementSchemas.every((schema, i) => (schema as any).validate(data[i]));
         }
     };
 }
@@ -292,7 +294,7 @@ export function map<K, V, KR, VR>(keys: Schema<K, KR>, values: Schema<V, VR>): S
             return acc;
         },
         validate: (data: unknown): data is [KR, VR][] => {
-            return arrayOf(tupleOf(keys, values)).validate(data);
+            return arrayOf(tupleOf<[K, V], [KR, VR]>(keys, values)).validate(data);
         },
     };
 }
@@ -318,6 +320,10 @@ export function set<T, S>(schema: Schema<T, S>): Schema<Set<T>, S[]> {
     };
 }
 
+type ZipObjectsToSchemas<Keys extends PrimKey, Ds extends Record<Keys, unknown>, Rs extends Record<Keys, unknown>> = {
+    [K in Keys]: Schema<Ds[K], Rs[K]>;
+};
+
 /**
  * Construct a schema for a given record type, given the structure of the
  * record. For example:
@@ -334,24 +340,26 @@ export function set<T, S>(schema: Schema<T, S>): Schema<Set<T>, S[]> {
  */
 export function recordOf<
     // The structure of the record
-    R extends Record<string, Schema<unknown, unknown>>,
->(structure: R): Schema<RecordDomains<R>, RecordReprs<R>> {
+    Keys extends string,
+    Ds extends Record<Keys, unknown>,
+    Rs extends Record<Keys, unknown>,
+>(structure: ZipObjectsToSchemas<Keys, Ds, Rs>): Schema<Ds, Rs> {
     return {
-        encode: (x: RecordDomains<R>) => {
-            const obj: Partial<RecordReprs<R>> = {};
+        encode: (x: Ds) => {
+            const obj: Partial<Rs> = {};
             for (const key in structure) {
-                obj[key] = structure[key].encode(x[key]) as ReprOf<R[keyof R]>;
+                obj[key] = structure[key].encode(x[key]);
             }
-            return obj as RecordReprs<R>;
+            return obj as Rs;
         },
-        decode: (obj: RecordReprs<R>) => {
-            const res: Partial<RecordDomains<R>> = {};
+        decode: (obj: Rs) => {
+            const res: Partial<Ds> = {};
             for (const key in structure) {
-                res[key] = structure[key].decode(obj[key]) as DomainOf<R[keyof R]>;
+                res[key] = structure[key].decode(obj[key]);
             }
-            return res as RecordDomains<R>;
+            return res as Ds;
         },
-        validate: (data: unknown): data is RecordReprs<R> => {
+        validate: (data: unknown): data is Rs => {
             if (typeof data !== "object" || data === null) {
                 return false;
             }
@@ -360,7 +368,7 @@ export function recordOf<
             // validator will handle 'undefined' keys. The 'Partial' here is
             // technically redundant, as the 'unknown' already handles the
             // 'undefined' case.
-            const obj = data as Partial<Record<keyof R, unknown>>;
+            const obj = data as Partial<Record<Keys, unknown>>;
             for (const key in structure) {
                 const validator = structure[key];
                 if (!validator.validate(obj[key])) {
@@ -401,10 +409,12 @@ export const anEmptyObject: Schema<{}, {}> = recordOf({});
  */
 export function classOf<
     // The structure of the encoded record
-    R extends Record<string, Schema<unknown, unknown>>,
-    T extends RecordDomains<R>
->(structure: R, reconstruct: (data: RecordDomains<R>) => T): Schema<T, RecordReprs<R>> {
-    return contra(recordOf(structure), id, reconstruct);
+    Keys extends string,
+    Ds extends Record<Keys, unknown>,
+    Rs extends Record<Keys, unknown>,
+    T extends Ds,
+>(structure: ZipObjectsToSchemas<Keys, Ds, Rs>, reconstruct: (data: Ds) => T): Schema<T, Rs> {
+    return contra(recordOf<Keys, Ds, Rs>(structure), id, reconstruct);
 }
 
 /**
@@ -513,7 +523,7 @@ export function constrain<T, S>(schema: Schema<T, S>, predicate: (x: S) => boole
  */
 export function asserting<T, R, S extends R>(schema: Schema<T, R>, predicate: (x: R) => x is S): Schema<T, S> {
     // We can decay type predicates to boolean constraints
-    return constrain(schema, predicate) as Schema<T, S>;
+    return constrain(schema, predicate) as any as Schema<T, S>;
 }
 
 /**
@@ -562,7 +572,7 @@ export function mapping<K extends string, T>(values: Record<K, T>): Schema<T, K>
     );
     // This is an unsafe cast, but it can be verified below that only `K`s
     // are passed below
-    const key: Schema<K, K> = keyOut as Schema<K, K>;
+    const key: Schema<K, K> = keyOut as any as Schema<K, K>;
     return contra(
         key,
         (val: T): K => {

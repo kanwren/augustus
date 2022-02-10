@@ -14,9 +14,9 @@
  * 'Schema<Person, { name: string; age: number; }' to handle this for us.
  */
 export interface Schema<T, S> {
-    encode(val: T): S;
-    decode(data: S): T;
-    validate(data: unknown): data is S;
+    encode: (val: T) => S;
+    decode: (data: S) => T;
+    validate: (data: unknown) => data is S;
 }
 
 /**

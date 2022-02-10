@@ -45,8 +45,8 @@ export function nonEmptyArrayOf<T, S>(
 ): Schema<NonEmptyArray<T>, NonEmptyArray<S>> {
     const { encode, decode, validate } = arrayOf(elementsSchema);
     return {
-        encode: encode as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
-        decode: decode as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
+        encode: encode as any as (value: NonEmptyArray<T>) => NonEmptyArray<S>,
+        decode: decode as any as (data: NonEmptyArray<S>) => NonEmptyArray<T>,
         validate: (data: unknown): data is NonEmptyArray<S> => {
             return Array.isArray(data) && data.length >= 1 && validate(data);
         },
