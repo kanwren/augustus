@@ -1,6 +1,6 @@
 {
   "name": "@nprindle/augustus",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "A library to construct combinators for serializing, deserializing, and validating data",
   "main": "dist/augustus.umd.js",
   "module": "dist/augustus.es5.js",
