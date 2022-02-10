@@ -144,27 +144,6 @@ test<"mapping">(() => {
     >(refl);
 });
 
-test<"discriminating">(() => {
-    // We currently need to help out the type inference here; changing this type
-    // should cause a compile error, though.
-    type TestDiscriminatingType = { disc: "foo"; a: number; } | { disc: "bar"; b: string; };
-    const testDiscriminating: Schema<TestDiscriminatingType, TestDiscriminatingType> =
-        S.discriminating("disc", {
-            foo: S.recordOf({ disc: S.literal("foo" as const), a: S.aNumber, }),
-            bar: S.recordOf({ disc: S.literal("bar" as const), b: S.aString, }),
-        });
-    testEq<
-        DomainOf<typeof testDiscriminating>,
-        ReprOf<typeof testDiscriminating>,
-        "discriminating same domain repr"
-    >(refl);
-    testEq<
-        DomainOf<typeof testDiscriminating>,
-        TestDiscriminatingType,
-        "discriminating correct domain"
-    >(refl);
-});
-
 test<"encodeWith and decodeWith">(() => {
     // Test that all of the values are accepted by encodeWith
     test<"encodeWith accepts correct types">(() => [
@@ -173,7 +152,7 @@ test<"encodeWith and decodeWith">(() => {
         Json.encodeWith(true, S.aBoolean),
         Json.encodeWith(null, S.aNull),
         Json.encodeWith({}, S.anEmptyObject),
-        Json.encodeWith([], S.anEmptyArray),
+        Json.encodeWith([] as [], S.anEmptyArray), // note: type is broadened by default
         Json.encodeWith({ foo: undefined }, S.recordOf({ foo: S.anUndefined })),
     ]);
 

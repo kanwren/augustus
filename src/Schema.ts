@@ -48,7 +48,7 @@ export interface InjectSchema<T, D, B, S> extends Schema<B, S> {
 /**
  * Extract the domain type from the type of a schema.
  */
-export type DomainOf<T extends Schema<unknown, unknown>> = T extends Schema<infer S, unknown> ? S : never;
+export type DomainOf<T> = T extends Schema<infer S, infer _> ? S : never;
 
 /**
  * Extract the representation type from the type of a schema. This is useful in
@@ -69,5 +69,5 @@ export type DomainOf<T extends Schema<unknown, unknown>> = T extends Schema<infe
  * type Person = ReprOf<typeof person>; // { name: string; age: number; }
  * </code></pre>
  */
-export type ReprOf<T extends Schema<unknown, unknown>> = T extends Schema<unknown, infer S> ? S : never;
+export type ReprOf<T> = T extends Schema<infer _, infer S> ? S : never;
 

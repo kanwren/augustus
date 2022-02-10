@@ -1,6 +1,7 @@
 // Functions for dealing with serialization to and from JSON
 
 import { Schema } from "./Schema";
+import * as S from "./Schemas";
 
 // Recursive JSON type definition. Adapted from here:
 // https://github.com/microsoft/TypeScript/issues/3496#issuecomment-128553540
@@ -20,6 +21,8 @@ interface JSONArray extends Array<JsonValue> {}
 export function encodeWith<T, S extends JsonValue>(value: T, schema: Schema<T, S>): string {
     return JSON.stringify(schema.encode(value));
 }
+const x: [] = [];
+encodeWith(x, S.anEmptyArray);
 
 /**
  * The result of attempting to decode a JSON string. Either we successfully

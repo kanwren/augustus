@@ -4,14 +4,14 @@ import * as Schemas from "./Schemas";
 
 // Ugly helper types for object- or tuple-based schemas
 // Replace the schemas in an object/array with the domains of the schemas
-type RecordDomainsLazy<R extends Record<string, () => Schema<unknown, unknown>>> = {
-    [K in keyof R]: ReturnType<R[K]> extends Schema<infer A, unknown> ? A : never;
-} & {};
+type RecordDomainsLazy<R extends Record<string, () => Schema<any, any>>> = {
+    [K in keyof R]: ReturnType<R[K]> extends Schema<infer D, infer _> ? D : never;
+};
 
 // Replace the schemas in an object/array with the representations of the schemas
-type RecordReprsLazy<R extends Record<string, () => Schema<unknown, unknown>>> = {
-    [K in keyof R]: ReturnType<R[K]> extends Schema<unknown, infer B> ? B : never;
-} & {};
+type RecordReprsLazy<R extends Record<string, () => Schema<any, any>>> = {
+    [K in keyof R]: ReturnType<R[K]> extends Schema<infer _, infer R> ? R : never;
+};
 
 /**
  * Like 'Schemas.arrayOf', but allows for a lazy schema for recursive types.
@@ -60,24 +60,26 @@ export function nonEmptyArrayOf<T, S>(
  * highly recursive types.
  */
 export function recordOf<
-    R extends Record<string, () => Schema<unknown, unknown>>,
+    R extends Record<string, () => Schema<any, any>>,
 >(structure: R): Schema<RecordDomainsLazy<R>, RecordReprsLazy<R>> {
+    type Ds = RecordDomainsLazy<R>;
+    type Rs = RecordReprsLazy<R>;
     return {
-        encode: (x: RecordDomainsLazy<R>) => {
-            const obj: Partial<RecordReprsLazy<R>> = {};
+        encode: (x: Ds) => {
+            const obj: Partial<Rs> = {};
             for (const key in structure) {
                 obj[key] = structure[key]().encode(x[key]) as ReprOf<ReturnType<R[keyof R]>>;
             }
-            return obj as RecordReprsLazy<R>;
+            return obj as Rs;
         },
-        decode: (obj: RecordReprsLazy<R>) => {
-            const res: Partial<RecordDomainsLazy<R>> = {};
+        decode: (obj: Rs) => {
+            const res: Partial<Ds> = {};
             for (const key in structure) {
                 res[key] = structure[key]().decode(obj[key]) as DomainOf<ReturnType<R[keyof R]>>;
             }
-            return res as RecordDomainsLazy<R>;
+            return res as Ds;
         },
-        validate: (data: unknown): data is RecordReprsLazy<R> => {
+        validate: (data: unknown): data is Rs => {
             if (typeof data !== "object" || data === null) {
                 return false;
             }
@@ -100,7 +102,7 @@ export function recordOf<
  * highly recursive types.
  */
 export function classOf<
-    R extends Record<string, () => Schema<unknown, unknown>>,
+    R extends Record<string, () => Schema<any, any>>,
     T extends RecordDomainsLazy<R>
 >(structure: R, reconstruct: (data: RecordDomainsLazy<R>) => T): Schema<T, RecordReprsLazy<R>> {
     return Schemas.contra(recordOf(structure), id, reconstruct);

@@ -198,20 +198,26 @@ export function nonEmptyArrayOf<T, S>(elementsSchema: Schema<T, S>): Schema<NonE
     };
 }
 
-type ZipTuplesToSchemas<Ds extends unknown[], Rs extends unknown[], Prefix extends unknown[] = []> =
-    Ds extends [infer DsHead, ...(infer DsTail)]
-        ? Rs extends [infer RsHead, ...(infer RsTail)]
-            ? ZipTuplesToSchemas<DsTail, RsTail, Snoc<Prefix, Schema<DsHead, RsHead>>>
+type TupleDomains<Schemas extends unknown[], Prefix extends unknown[] = []> =
+    Schemas extends [infer H, ...(infer T)]
+        ? H extends Schema<infer D, infer _>
+            ? TupleDomains<T, Snoc<Prefix, D>>
+            : "bar"
+        : Prefix;
+type TupleReprs<Schemas extends unknown[], Prefix extends unknown[] = []> =
+    Schemas extends [infer H, ...(infer T)]
+        ? H extends Schema<infer _, infer R>
+            ? TupleReprs<T, Snoc<Prefix, R>>
             : never
-        : Rs extends [infer _, ...(infer _)]
-            ? never
-            : Prefix;
+        : Prefix;
 
 // TODO: help out type inference here
 export function tupleOf<
-    Ds extends unknown[],
-    Rs extends unknown[],
->(...elementSchemas: ZipTuplesToSchemas<Ds, Rs>): Schema<Ds, Rs> {
+    // The structure of the tuple. See the note about `any`s in 'recordOf'.
+    R extends Schema<any, any>[]
+>(...elementSchemas: R): Schema<TupleDomains<R>, TupleReprs<R>> {
+    type Ds = TupleDomains<R>;
+    type Rs = TupleReprs<R>;
     return {
         // can't map in a typesafe way :(
         encode: (tup: Ds) => {
@@ -294,7 +300,7 @@ export function map<K, V, KR, VR>(keys: Schema<K, KR>, values: Schema<V, VR>): S
             return acc;
         },
         validate: (data: unknown): data is [KR, VR][] => {
-            return arrayOf(tupleOf<[K, V], [KR, VR]>(keys, values)).validate(data);
+            return arrayOf(tupleOf(keys, values)).validate(data);
         },
     };
 }
@@ -320,8 +326,11 @@ export function set<T, S>(schema: Schema<T, S>): Schema<Set<T>, S[]> {
     };
 }
 
-type ZipObjectsToSchemas<Keys extends PrimKey, Ds extends Record<Keys, unknown>, Rs extends Record<Keys, unknown>> = {
-    [K in Keys]: Schema<Ds[K], Rs[K]>;
+type RecordDomains<R extends Record<string, Schema<any, any>>> = {
+    [K in keyof R]: R[K] extends Schema<infer D, infer _> ? D : never;
+};
+type RecordReprs<R extends Record<string, Schema<any, any>>> = {
+    [K in keyof R]: R[K] extends Schema<infer _, infer R> ? R : never;
 };
 
 /**
@@ -339,11 +348,20 @@ type ZipObjectsToSchemas<Keys extends PrimKey, Ds extends Record<Keys, unknown>,
  * </code></pre>
  */
 export function recordOf<
-    // The structure of the record
-    Keys extends string,
-    Ds extends Record<Keys, unknown>,
-    Rs extends Record<Keys, unknown>,
->(structure: ZipObjectsToSchemas<Keys, Ds, Rs>): Schema<Ds, Rs> {
+    // The structure of the record.
+    //
+    // The `any`s are necessary to allow bivariant checking on the Schema, or
+    // else this wouldn't be possible to type. Another option would be to take
+    // type parameters for the domains and reprs, and then construct the
+    // expected result type out of this, but this breaks type inference, as the
+    // two types cannot be inferred backwards through the needed type alias for
+    // injectivity reasons. The `any`s do not escape into the result type,
+    // unless the user legitimately provided `any`s, in which case there's
+    // nothing we can do.
+    R extends Record<string, Schema<any, any>>
+>(structure: R): Schema<RecordDomains<R>, RecordReprs<R>> {
+    type Ds = RecordDomains<R>;
+    type Rs = RecordReprs<R>;
     return {
         encode: (x: Ds) => {
             const obj: Partial<Rs> = {};
@@ -368,7 +386,7 @@ export function recordOf<
             // validator will handle 'undefined' keys. The 'Partial' here is
             // technically redundant, as the 'unknown' already handles the
             // 'undefined' case.
-            const obj = data as Partial<Record<Keys, unknown>>;
+            const obj = data as Partial<Record<keyof R, unknown>>;
             for (const key in structure) {
                 const validator = structure[key];
                 if (!validator.validate(obj[key])) {
@@ -409,12 +427,10 @@ export const anEmptyObject: Schema<{}, {}> = recordOf({});
  */
 export function classOf<
     // The structure of the encoded record
-    Keys extends string,
-    Ds extends Record<Keys, unknown>,
-    Rs extends Record<Keys, unknown>,
-    T extends Ds,
->(structure: ZipObjectsToSchemas<Keys, Ds, Rs>, reconstruct: (data: Ds) => T): Schema<T, Rs> {
-    return contra(recordOf<Keys, Ds, Rs>(structure), id, reconstruct);
+    R extends Record<string, Schema<any, any>>,
+    T extends RecordDomains<R>,
+>(structure: R, reconstruct: (data: RecordDomains<R>) => T): Schema<T, RecordReprs<R>> {
+    return contra(recordOf(structure), id, reconstruct);
 }
 
 /**
@@ -585,47 +601,5 @@ export function mapping<K extends string, T>(values: Record<K, T>): Schema<T, K>
         },
         (key: K): T => values[key],
     );
-}
-
-/**
- * If a type is discriminated by some key, given a record of values
- * associated with that key, use the key to discriminate on the type. This
- * is useful for discriminated unions, where each branch of the union has a
- * different literal type for some discriminating key. Note that this
- * currently usually needs an explicit type declaration on the schema to
- * figure out the domain and representation types.
- */
-export function discriminating<
-    T extends Record<D, PrimKey>,
-    S extends Record<D, T[D]>,
-    // the discriminating key, in the domain and representation types
-    D extends keyof T & keyof S,
->(discriminant: D, schemas: Record<T[D], Schema<T, S>>): Schema<T, S> {
-    return {
-        encode: (x: T): S => {
-            return schemas[x[discriminant]].encode(x);
-        },
-        decode: (x: S): T => {
-            // TypeScript needs coercion here to figure out that the types
-            // are equal, T[D] = S[D]
-            const t = x[discriminant] as unknown as T[D];
-            return schemas[t].decode(x);
-        },
-        validate: (data: unknown): data is any => {
-            if (typeof data !== "object" || data === null) {
-                return false;
-            }
-            const discriminantValue = (data as any)[discriminant] as T[D] | undefined;
-            if (discriminantValue === undefined) {
-                return false;
-            }
-            const schema = schemas[discriminantValue] as Schema<T, S> | undefined;
-            if (schema) {
-                return schema.validate(data);
-            } else {
-                return false;
-            }
-        },
-    };
 }
 

@@ -19,7 +19,6 @@ for safe JSON serialization/deserialization.
         * [`contra` and `co`](#contra-and-co)
         * [`constrain` and `asserting`](#constrain-and-asserting)
         * [`indexing` and `mapping`](#indexing-and-mapping)
-        * [`discriminating`](#discriminating)
         * [`injecting`](#injecting)
         * [`lazy` and lazy aggregates](#lazy-and-lazy-aggregates)
     * [Serialization](#serialization)
@@ -300,27 +299,6 @@ const schema = S.mapping(arr);
 
 schema.encode(1);     // "foo"
 schema.decode("bar"); // 2
-```
-
-#### `discriminating`
-
-`discriminating` handles discriminated unions based on the different values of a
-discriminating key. For example:
-
-```typescript
-import { Schemas as S, Schema } from "@nprindle/augustus";
-
-type DiscUnion =
-    | { disc: "foo"; a: number; }
-    | { disc: "bar"; b: string; }
-    ;
-
-// We need to help the type inference out here by declaring an explicit type
-const discUnionSchema: Schema<DiscUnion, DiscUnion> =
-    S.discriminating("disc", {
-        foo: S.recordOf({ disc: S.literal("foo" as const), a: S.aNumber }),
-        bar: S.recordOf({ disc: S.literal("bar" as const), b: S.aString }),
-    })
 ```
 
 #### `injecting`
