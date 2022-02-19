@@ -227,6 +227,12 @@ new domain        old domain        repr
 representation type. However, this also requires you to provide a new validating
 function, so this is much less useful than `contra`.
 
+Additionally, if you already have two schemas `Schema<A, B>` and `Schema<B, C>`
+and want to compose them into a `Schema<A, C>`, you can use `compose`. Note that
+this is more information than is required to make this composition; the
+validation function of the `Schema<A, B>` will be discarded. If you don't
+already have the two schemas to compose, prefer `contra`.
+
 #### `constrain` and `asserting`
 
 `constrain` doesn't change the type of a schema, but it narrows the schema's

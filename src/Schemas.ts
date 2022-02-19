@@ -75,6 +75,22 @@ export function co<T, S, U>(
 }
 
 /**
+ * Compose two schemas together. The encoder and decoder are the compositions of
+ * the two schemas.
+ *
+ * Two schemas contain strictly more information than is required to compose the
+ * two together; namely, the validation function from the first schema is
+ * discarded. If you want to extend the domain side of a schema and you only
+ * have an encoder and decoder, use 'contra' instead.
+ */
+export function compose<T, S, U>(
+    schema1: Schema<T, S>,
+    schema2: Schema<S, U>,
+): Schema<T, U> {
+    return contra(schema2, schema1.encode, schema1.decode);
+}
+
+/**
  * Pushes the evaluation of a schema into its individual functions, for use
  * with recursive structures. Note that if the 'schema' computation is very
  * expensive, this may be inefficient for aggregate schemas, such as
