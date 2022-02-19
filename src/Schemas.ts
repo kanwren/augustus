@@ -218,7 +218,7 @@ type TupleDomains<Schemas extends unknown[], Prefix extends unknown[] = []> =
     Schemas extends [infer H, ...(infer T)]
         ? H extends Schema<infer D, infer _>
             ? TupleDomains<T, Snoc<Prefix, D>>
-            : "bar"
+            : never
         : Prefix;
 type TupleReprs<Schemas extends unknown[], Prefix extends unknown[] = []> =
     Schemas extends [infer H, ...(infer T)]
@@ -227,7 +227,6 @@ type TupleReprs<Schemas extends unknown[], Prefix extends unknown[] = []> =
             : never
         : Prefix;
 
-// TODO: help out type inference here
 export function tupleOf<
     // The structure of the tuple. See the note about `any`s in 'recordOf'.
     R extends Schema<any, any>[]
