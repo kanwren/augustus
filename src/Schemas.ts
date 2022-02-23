@@ -1,8 +1,8 @@
 // A set of data-oriented combinators for building up complex schemas
 
-import { Snoc } from "./Tuples";
-import { Schema, InjectSchema } from "./Schema";
-import { NonEmptyArray, id, impossible } from "./Utils";
+import { Head, Tail, Snoc } from "./Tuples";
+import { Schema, InjectSchema, DomainOf, ReprOf } from "./Schema";
+import { NonEmptyArray, id, impossible, foldMapNonEmpty } from "./Utils";
 
 /**
  * The possible types of the keys of an object
@@ -508,6 +508,36 @@ export function union<TL, TR, SR>(left: Schema<TL, TL>, right: Schema<TR, SR>): 
         left,
         right,
     );
+}
+
+type UnionDomainsReprs<Schemas extends unknown[], Acc = never> =
+    Schemas extends [infer H, ...(infer T)]
+        ? H extends Schema<infer D, infer D>
+            ? UnionDomainsReprs<T, Acc | D>
+            : never
+        : Acc;
+
+/**
+ * Construct a schema for a type union given any number of schemas. The schemas
+ * must be trivially encodable ('Schema<T, T>'). Like 'union' and 'unionOf',
+ * this is left-biased; the first (leftmost) schema will apply in the case
+ * where more than one schema would validate a value.
+ */
+export function multiUnion<
+    R extends NonEmptyArray<Schema<any, any>>
+>(...elementSchemas: R): Schema<UnionDomainsReprs<R>, UnionDomainsReprs<R>> {
+    return elementSchemas.reduce((prev, curr) => union(prev, curr));
+};
+
+/**
+ * Construct a schema for a union of literal values.
+ *
+ * The values should be declared with `as const` unless the type parameter is
+ * specified explicitly; otherwise the type will be incorrectly widened (e.g.
+ * to `string` instead of `"foo" | "bar"`).
+ */
+ export function literalUnion<T>(...values: NonEmptyArray<T>): Schema<T, T> {
+    return foldMapNonEmpty(values, x => literal(x), (x, y) => union(x, y));
 }
 
 /**
