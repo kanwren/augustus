@@ -4,6 +4,7 @@ const possibleErrorRules = {
   "no-unused-vars": "off",
   "@typescript-eslint/no-unused-vars": ["error", {
     "vars": "all",
+    "varsIgnorePattern": "^_",
     "args": "none", // don't check function args
     "ignoreRestSiblings": false, // don't check rests like { a, ...b }
   }],

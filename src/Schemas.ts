@@ -1,7 +1,7 @@
 // A set of data-oriented combinators for building up complex schemas
 
-import { Head, Tail, Snoc } from "./Tuples";
-import { Schema, InjectSchema, DomainOf, ReprOf } from "./Schema";
+import { Snoc } from "./Tuples";
+import { Schema, InjectSchema } from "./Schema";
 import { NonEmptyArray, id, impossible } from "./Utils";
 
 /**
@@ -169,7 +169,7 @@ export const aNull: Schema<null, null> = primitive((data: unknown): data is null
  */
 export const aSymbol: Schema<symbol, symbol> = primitive((data: unknown): data is symbol => {
     return typeof data === "symbol";
-})
+});
 
 /**
  * Trivial 'Schema' for 'undefined'.
