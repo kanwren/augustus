@@ -1,7 +1,7 @@
 // A set of data-oriented combinators for building up complex schemas
 
-import { Head, Tail, Snoc } from "./Tuples";
-import { Schema, InjectSchema, DomainOf, ReprOf } from "./Schema";
+import { Snoc } from "./Tuples";
+import { Schema, InjectSchema } from "./Schema";
 import { NonEmptyArray, id, impossible, foldMapNonEmpty } from "./Utils";
 
 /**
@@ -529,7 +529,7 @@ export function unionMany<
     R extends NonEmptyArray<Schema<any, any>>
 >(...elementSchemas: R): Schema<UnionDomainsReprs<R>, UnionDomainsReprs<R>> {
     return elementSchemas.reduce((prev, curr) => union(prev, curr));
-};
+}
 
 /**
  * Construct a schema for a union of literal values.
@@ -538,7 +538,7 @@ export function unionMany<
  * specified explicitly; otherwise the type will be incorrectly widened (e.g.
  * to `string` instead of `"foo" | "bar"`).
  */
- export function literalUnion<T>(...values: NonEmptyArray<T>): Schema<T, T> {
+export function literalUnion<T>(...values: NonEmptyArray<T>): Schema<T, T> {
     return foldMapNonEmpty(values, x => literal(x), (x, y) => union(x, y));
 }
 
