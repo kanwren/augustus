@@ -1,6 +1,6 @@
 export type NonEmptyArray<T> = [T, ...T[]];
 
-export function foldMapNonEmpty<T, R>(xs: NonEmptyArray<T>, f: (t: T) => R, g: (current: R, acc: R) => R) {
+export function foldMapNonEmpty<T, R>(xs: NonEmptyArray<T>, f: (t: T) => R, g: (current: R, acc: R) => R): R {
     return xs.map(x => f(x)).reduce((x, y) => g(x, y));
 }
 

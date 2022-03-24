@@ -522,8 +522,10 @@ type UnionDomainsReprs<Schemas extends unknown[], Acc = never> =
  * must be trivially encodable ('Schema<T, T>'). Like 'union' and 'unionOf',
  * this is left-biased; the first (leftmost) schema will apply in the case
  * where more than one schema would validate a value.
+ *
+ * See the note about `any`s in 'recordOf'.
  */
-export function multiUnion<
+export function unionMany<
     R extends NonEmptyArray<Schema<any, any>>
 >(...elementSchemas: R): Schema<UnionDomainsReprs<R>, UnionDomainsReprs<R>> {
     return elementSchemas.reduce((prev, curr) => union(prev, curr));
