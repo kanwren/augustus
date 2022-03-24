@@ -538,7 +538,7 @@ export function unionMany<
  * specified explicitly; otherwise the type will be incorrectly widened (e.g.
  * to `string` instead of `"foo" | "bar"`).
  */
-export function literalUnion<T>(...values: NonEmptyArray<T>): Schema<T, T> {
+export function literalUnionMany<T>(...values: NonEmptyArray<T>): Schema<T, T> {
     return foldMapNonEmpty(values, x => literal(x), (x, y) => union(x, y));
 }
 
